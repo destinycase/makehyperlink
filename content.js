@@ -68,6 +68,13 @@
         } catch (err) {
             console.warn('MakeHyperlink: Clipboard API 실패, 폴백 시도...', err);
             
+            // 기존 선택 영역 저장
+            const selection = window.getSelection();
+            const originalRanges = [];
+            for (let i = 0; i < selection.rangeCount; i++) {
+                originalRanges.push(selection.getRangeAt(i).cloneRange());
+            }
+
             // 2. document.execCommand('copy')를 이용한 Rich Text 복사 폴백
             try {
                 const tempDiv = document.createElement('div');
@@ -79,7 +86,6 @@
                 
                 const range = document.createRange();
                 range.selectNodeContents(tempDiv);
-                const selection = window.getSelection();
                 selection.removeAllRanges();
                 selection.addRange(range);
                 
@@ -95,6 +101,10 @@
             } catch (fallbackErr) {
                 console.error('MakeHyperlink: 모든 복사 시도 실패', fallbackErr);
                 showToast('복사에 실패했습니다.');
+            } finally {
+                // 기존 선택 영역 복구
+                selection.removeAllRanges();
+                originalRanges.forEach(range => selection.addRange(range));
             }
         }
     }

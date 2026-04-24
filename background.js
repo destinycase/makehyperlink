@@ -60,6 +60,9 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     }
 });
 
+// 주입 중인 탭을 추적하기 위한 객체 (레이스 컨디션 방지)
+const injectionQueue = new Set();
+
 // 콘텐츠 스크립트 주입 상태를 확인하고 필요 시 주입하는 함수
 async function ensureContentScriptInjected(tabId, url) {
     // 특수 페이지(chrome:// 등)에서는 주입 불가
@@ -67,11 +70,25 @@ async function ensureContentScriptInjected(tabId, url) {
         throw new Error("브라우저 정책상 이 페이지에서는 기능을 사용할 수 없습니다.");
     }
 
+    // 이미 주입 프로세스가 진행 중인 경우 완료될 때까지 대기
+    if (injectionQueue.has(tabId)) {
+        console.log(`MakeHyperlink: 탭 ${tabId}에 대해 이미 주입이 진행 중입니다. 대기...`);
+        return new Promise(resolve => {
+            const checkInterval = setInterval(() => {
+                if (!injectionQueue.has(tabId)) {
+                    clearInterval(checkInterval);
+                    resolve();
+                }
+            }, 100);
+        });
+    }
+
     return new Promise((resolve, reject) => {
         // 먼저 PING을 보내서 스크립트가 응답하는지 확인
         chrome.tabs.sendMessage(tabId, { action: "PING" }, (response) => {
             if (chrome.runtime.lastError || !response) {
                 console.log("MakeHyperlink: 콘텐츠 스크립트 없음. 동적 주입 시작...");
+                injectionQueue.add(tabId);
                 
                 // 스크립트와 CSS 주입
                 chrome.scripting.executeScript({
@@ -84,9 +101,11 @@ async function ensureContentScriptInjected(tabId, url) {
                     });
                 }).then(() => {
                     console.log("MakeHyperlink: 스크립트 주입 완료");
+                    injectionQueue.delete(tabId);
                     resolve();
                 }).catch(err => {
                     console.error("MakeHyperlink: 스크립트 주입 실패", err);
+                    injectionQueue.delete(tabId);
                     reject(err);
                 });
             } else {
