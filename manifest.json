@@ -1,0 +1,42 @@
+{
+  "manifest_version": 3,
+  "name": "MakeHyperlink",
+  "version": "1.0",
+  "description": "드래그한 텍스트를 현재 페이지 URL과 연결된 하이퍼링크로 복사합니다.",
+  "permissions": [
+    "activeTab",
+    "contextMenus",
+    "storage",
+    "scripting"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "MakeHyperlink 설정",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "css": [
+        "style.css"
+      ]
+    }
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MakeHyperlink 설정</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <div class="logo-icon">✓</div>
+                <h1>MakeHyperlink</h1>
+            </div>
+        </header>
+
+        <main>
+            <section class="shortcut-section">
+                <h2>단축키 커스텀</h2>
+                <p class="description">하이퍼링크를 만들 단축키를 입력하세요.</p>
+                
+                <div class="shortcut-input-group">
+                    <div id="shortcut-display" class="shortcut-box">
+                        <span id="current-shortcut">Ctrl + Alt + C</span>
+                    </div>
+                    <button id="record-btn" class="btn-primary">변경하기</button>
+                </div>
+                <p id="status-msg" class="status-msg">설정을 변경하려면 '변경하기' 버튼을 누르세요.</p>
+            </section>
+
+            <section class="option-section">
+                <div class="option-item">
+                    <span class="option-label">단축키 활성화</span>
+                    <label class="switch">
+                        <input type="checkbox" id="enable-shortcut" checked>
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; 2024 MakeHyperlink. Premium Tools.</p>
+        </footer>
+    </div>
+    <script src="popup.js"></script>
+</body>
+</html>
