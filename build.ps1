@@ -1,5 +1,8 @@
 # MakeHyperlink Local Build Script (Windows PowerShell)
 
+$PSScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+Push-Location $PSScriptRoot
+
 $version = (Get-Content manifest.json | ConvertFrom-Json).version
 $zipName = "makehyperlink-v$version.zip"
 
@@ -25,3 +28,5 @@ Compress-Archive -Path $files -DestinationPath $zipName -Force
 
 Write-Host "배포 파일이 생성되었습니다: $zipName" -ForegroundColor Green
 Write-Host "이제 이 파일을 Chrome 웹 스토어에 업로드할 수 있습니다."
+
+Pop-Location
