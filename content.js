@@ -21,9 +21,18 @@
     `;
     document.body.appendChild(toast);
 
-    function showToast(message) {
+    function showToast(message, isError = false) {
         if (message) {
             toast.querySelector('.mh-toast-text').textContent = message;
+        }
+        
+        const iconElement = toast.querySelector('.mh-toast-icon');
+        if (isError) {
+            iconElement.innerHTML = '✕';
+            iconElement.style.background = 'linear-gradient(to right, #ff416c, #ff4b2b)';
+        } else {
+            iconElement.innerHTML = '✓';
+            iconElement.style.background = 'linear-gradient(to right, #3a7bd5, #00d2ff)';
         }
         
         clearTimeout(toastTimeout);
@@ -31,17 +40,27 @@
         
         toastTimeout = setTimeout(() => {
             toast.classList.remove('show');
-        }, 2500);
+        }, isError ? 4000 : 2500);
     }
 
     // 하이퍼링크 생성 및 복사 함수
     async function copyHyperlink() {
-        const selection = window.getSelection();
-        const selectedText = selection.toString().trim();
+        let selection = window.getSelection();
+        let selectedText = selection.toString().trim();
+        
+        // Input이나 Textarea 내부의 텍스트가 드래그된 경우, window.getSelection()으로 잡히지 않으므로 별도 처리
+        if (!selectedText && document.activeElement) {
+            const activeEl = document.activeElement;
+            if (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA') {
+                if (typeof activeEl.selectionStart === 'number' && typeof activeEl.selectionEnd === 'number') {
+                    selectedText = activeEl.value.substring(activeEl.selectionStart, activeEl.selectionEnd).trim();
+                }
+            }
+        }
         
         if (!selectedText) {
             console.log('MakeHyperlink: 선택된 텍스트가 없습니다.');
-            showToast('텍스트를 먼저 드래그해 주세요.');
+            showToast('텍스트를 먼저 드래그해 주세요.', true);
             return;
         }
         console.log('MakeHyperlink: 복사 시도 - ', selectedText);
@@ -66,7 +85,8 @@
             console.log('MakeHyperlink: Clipboard API 복사 성공');
             showToast('하이퍼링크 복사 완료!');
         } catch (err) {
-            console.warn('MakeHyperlink: Clipboard API 실패, 폴백 시도...', err);
+            const firstErrMsg = err && err.message ? err.message : String(err);
+            console.warn('MakeHyperlink: Clipboard API 실패, 폴백 시도...', firstErrMsg);
             
             // 기존 선택 영역 저장
             const selection = window.getSelection();
@@ -99,8 +119,14 @@
                     throw new Error('execCommand returned false');
                 }
             } catch (fallbackErr) {
-                console.error('MakeHyperlink: 모든 복사 시도 실패', fallbackErr);
-                showToast('복사에 실패했습니다.');
+                const fallbackErrMsg = fallbackErr && fallbackErr.message ? fallbackErr.message : String(fallbackErr);
+                console.error('MakeHyperlink: 모든 복사 시도 실패', fallbackErrMsg);
+                
+                let errorDisplay = `1: ${firstErrMsg} | 2: ${fallbackErrMsg}`;
+                if (errorDisplay.length > 70) {
+                    errorDisplay = errorDisplay.substring(0, 67) + '...';
+                }
+                showToast(`복사 실패: ${errorDisplay}`, true);
             } finally {
                 // 기존 선택 영역 복구
                 selection.removeAllRanges();
