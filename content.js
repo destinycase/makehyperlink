@@ -50,11 +50,17 @@
         
         // Input이나 Textarea 내부의 텍스트가 드래그된 경우, window.getSelection()으로 잡히지 않으므로 별도 처리
         if (!selectedText && document.activeElement) {
-            const activeEl = document.activeElement;
-            if (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA') {
-                if (typeof activeEl.selectionStart === 'number' && typeof activeEl.selectionEnd === 'number') {
-                    selectedText = activeEl.value.substring(activeEl.selectionStart, activeEl.selectionEnd).trim();
+            try {
+                const activeEl = document.activeElement;
+                if (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA') {
+                    if (typeof activeEl.selectionStart === 'number' && typeof activeEl.selectionEnd === 'number') {
+                        selectedText = activeEl.value.substring(activeEl.selectionStart, activeEl.selectionEnd).trim();
+                    }
                 }
+            } catch (secErr) {
+                console.warn('MakeHyperlink: activeElement 접근 중 보안 에러 (Cross-Origin Iframe 등)', secErr);
+                showToast('보안 정책(외부 Iframe 등)으로 인해 텍스트에 접근할 수 없습니다.', true);
+                return;
             }
         }
         
