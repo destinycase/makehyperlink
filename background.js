@@ -3,122 +3,166 @@
  */
 
 const MENU_ID = "make-hyperlink-context-menu";
+const DEFAULT_SHORTCUT_DISPLAY = "Ctrl+Alt+C";
+const injectionPromises = new Map();
+let contextMenuUpdate = Promise.resolve();
 
-// 컨텍스트 메뉴를 생성하거나 업데이트하는 통합 함수
-function setupContextMenu() {
-    chrome.storage.local.get(['shortcut', 'enabled'], (result) => {
-        const enabled = result.hasOwnProperty('enabled') ? result.enabled : true;
-        const shortcutDisplay = result.shortcut ? result.shortcut.display : "Ctrl+Alt+C";
-        
-        const title = enabled 
-            ? `하이퍼링크 만들기 (${shortcutDisplay})` 
-            : "하이퍼링크 만들기";
-
-        // 기존 메뉴가 있는지 확인하기 위해 먼저 삭제 시도 (에러 무시)
-        chrome.contextMenus.removeAll(() => {
-            chrome.contextMenus.create({
-                id: MENU_ID,
-                title: title,
-                contexts: ["selection"]
-            }, () => {
-                if (chrome.runtime.lastError) {
-                    console.log("Context menu creation handled: " + chrome.runtime.lastError.message);
-                }
-            });
-        });
-    });
+function hasOwn(object, property) {
+    return Object.prototype.hasOwnProperty.call(object, property);
 }
 
-// 확장 프로그램 설치 또는 업데이트 시 실행
-chrome.runtime.onInstalled.addListener(() => {
-    setupContextMenu();
-});
-
-// 서비스 워커가 시작될 때마다 실행 (상태 유지)
-setupContextMenu();
-
-// 컨텍스트 메뉴 클릭 이벤트 처리
-chrome.contextMenus.onClicked.addListener(async (info, tab) => {
-    if (info.menuItemId === MENU_ID) {
-        console.log("MakeHyperlink: 컨텍스트 메뉴 클릭됨. 연결 확인 중...");
-        
-        try {
-            // 콘텐츠 스크립트가 로드되어 있는지 확인하고 없으면 주입
-            await ensureContentScriptInjected(tab.id, tab.url);
-            
-            // 메시지 전송
-            chrome.tabs.sendMessage(tab.id, { action: "COPY_LINK" }, (response) => {
-                if (chrome.runtime.lastError) {
-                    console.error("MakeHyperlink: 최종 메시지 전송 실패 - ", chrome.runtime.lastError.message);
-                } else {
-                    console.log("MakeHyperlink: 메시지 전송 성공", response);
-                }
-            });
-        } catch (err) {
-            console.error("MakeHyperlink: 처리 중 오류 발생 - ", err.message);
-        }
-    }
-});
-
-// 주입 중인 탭을 추적하기 위한 객체 (레이스 컨디션 방지)
-const injectionQueue = new Set();
-
-// 콘텐츠 스크립트 주입 상태를 확인하고 필요 시 주입하는 함수
-async function ensureContentScriptInjected(tabId, url) {
-    // 특수 페이지(chrome:// 등)에서는 주입 불가
-    if (!url || url.startsWith('chrome://') || url.startsWith('edge://') || url.startsWith('https://chrome.google.com/webstore/')) {
-        throw new Error("브라우저 정책상 이 페이지에서는 기능을 사용할 수 없습니다.");
-    }
-
-    // 이미 주입 프로세스가 진행 중인 경우 완료될 때까지 대기
-    if (injectionQueue.has(tabId)) {
-        console.log(`MakeHyperlink: 탭 ${tabId}에 대해 이미 주입이 진행 중입니다. 대기...`);
-        return new Promise(resolve => {
-            const checkInterval = setInterval(() => {
-                if (!injectionQueue.has(tabId)) {
-                    clearInterval(checkInterval);
-                    resolve();
-                }
-            }, 100);
-        });
-    }
-
+function getLocalSettings() {
     return new Promise((resolve, reject) => {
-        // 먼저 PING을 보내서 스크립트가 응답하는지 확인
-        chrome.tabs.sendMessage(tabId, { action: "PING" }, (response) => {
-            if (chrome.runtime.lastError || !response) {
-                console.log("MakeHyperlink: 콘텐츠 스크립트 없음. 동적 주입 시작...");
-                injectionQueue.add(tabId);
-                
-                // 스크립트와 CSS 주입
-                chrome.scripting.executeScript({
-                    target: { tabId: tabId },
-                    files: ["content.js"]
-                }).then(() => {
-                    return chrome.scripting.insertCSS({
-                        target: { tabId: tabId },
-                        files: ["style.css"]
-                    });
-                }).then(() => {
-                    console.log("MakeHyperlink: 스크립트 주입 완료");
-                    injectionQueue.delete(tabId);
-                    resolve();
-                }).catch(err => {
-                    console.error("MakeHyperlink: 스크립트 주입 실패", err);
-                    injectionQueue.delete(tabId);
-                    reject(err);
-                });
-            } else {
-                console.log("MakeHyperlink: 콘텐츠 스크립트가 이미 활성화되어 있습니다.");
-                resolve();
+        chrome.storage.local.get(["shortcut", "enabled"], (result) => {
+            const error = chrome.runtime.lastError;
+            if (error) {
+                reject(new Error(error.message));
+                return;
             }
+            resolve(result);
         });
     });
 }
 
-// 단축키 설정 변경 감지 시 메뉴 즉시 업데이트
+function removeAllContextMenus() {
+    return new Promise((resolve, reject) => {
+        chrome.contextMenus.removeAll(() => {
+            const error = chrome.runtime.lastError;
+            if (error) {
+                reject(new Error(error.message));
+                return;
+            }
+            resolve();
+        });
+    });
+}
+
+function createContextMenu(options) {
+    return new Promise((resolve, reject) => {
+        chrome.contextMenus.create(options, () => {
+            const error = chrome.runtime.lastError;
+            if (error) {
+                reject(new Error(error.message));
+                return;
+            }
+            resolve();
+        });
+    });
+}
+
+// 설정 변경이 짧은 시간에 여러 번 발생해도 메뉴 갱신 순서를 보장합니다.
+function setupContextMenu() {
+    contextMenuUpdate = contextMenuUpdate
+        .catch(() => {})
+        .then(async () => {
+            const settings = await getLocalSettings();
+            const enabled = hasOwn(settings, "enabled") ? settings.enabled : true;
+            const shortcutDisplay = settings.shortcut?.display || DEFAULT_SHORTCUT_DISPLAY;
+            const title = enabled
+                ? `하이퍼링크 만들기 (${shortcutDisplay})`
+                : "하이퍼링크 만들기";
+
+            await removeAllContextMenus();
+            await createContextMenu({
+                id: MENU_ID,
+                title,
+                contexts: ["selection"]
+            });
+        })
+        .catch((error) => {
+            console.error("MakeHyperlink: 컨텍스트 메뉴 설정 실패", error);
+        });
+
+    return contextMenuUpdate;
+}
+
+function sendMessage(tabId, frameId, message) {
+    return new Promise((resolve, reject) => {
+        chrome.tabs.sendMessage(tabId, message, { frameId }, (response) => {
+            const error = chrome.runtime.lastError;
+            if (error) {
+                reject(new Error(error.message));
+                return;
+            }
+            resolve(response);
+        });
+    });
+}
+
+function pingContentScript(tabId, frameId) {
+    return sendMessage(tabId, frameId, { action: "PING" }).catch(() => null);
+}
+
+function isRestrictedPage(url) {
+    return !url
+        || /^(?:chrome|edge|about|brave|opera|vivaldi|view-source|devtools|chrome-extension):/i.test(url)
+        || url.startsWith("https://chrome.google.com/webstore/");
+}
+
+async function injectContentScript(tabId, frameId) {
+    const response = await pingContentScript(tabId, frameId);
+    if (response?.status === "ALIVE") {
+        return;
+    }
+
+    console.log("MakeHyperlink: 콘텐츠 스크립트 없음. 동적 주입 시작...");
+    await chrome.scripting.executeScript({
+        target: { tabId, frameIds: [frameId] },
+        files: ["content.js"]
+    });
+    await chrome.scripting.insertCSS({
+        target: { tabId, frameIds: [frameId] },
+        files: ["style.css"]
+    });
+    console.log("MakeHyperlink: 스크립트 주입 완료");
+}
+
+// 콘텐츠 스크립트 주입을 탭별 Promise로 공유해 동시 클릭을 안전하게 처리합니다.
+function ensureContentScriptInjected(tabId, frameId, url) {
+    if (isRestrictedPage(url)) {
+        return Promise.reject(new Error("브라우저 정책상 이 페이지에서는 기능을 사용할 수 없습니다."));
+    }
+
+    const key = `${tabId}:${frameId}`;
+    const existingPromise = injectionPromises.get(key);
+    if (existingPromise) {
+        return existingPromise;
+    }
+
+    const injectionPromise = injectContentScript(tabId, frameId).finally(() => {
+        if (injectionPromises.get(key) === injectionPromise) {
+            injectionPromises.delete(key);
+        }
+    });
+    injectionPromises.set(key, injectionPromise);
+    return injectionPromise;
+}
+
+chrome.runtime.onInstalled.addListener(() => {
+    void setupContextMenu();
+});
+
+void setupContextMenu();
+
+chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+    if (info.menuItemId !== MENU_ID || !tab?.id) {
+        return;
+    }
+
+    try {
+        const frameId = info.frameId ?? 0;
+        await ensureContentScriptInjected(tab.id, frameId, tab.url);
+        const response = await sendMessage(tab.id, frameId, { action: "COPY_LINK", selectedText: info.selectionText, url: info.pageUrl || tab.url });
+        if (response?.status !== "SUCCESS") {
+            console.warn("MakeHyperlink: 복사 처리 실패", response?.message || "알 수 없는 오류");
+        }
+    } catch (error) {
+        console.error("MakeHyperlink: 처리 중 오류 발생", error);
+    }
+});
+
 chrome.storage.onChanged.addListener((changes, namespace) => {
-    if (namespace === 'local') {
-        setupContextMenu();
+    if (namespace === "local" && ("shortcut" in changes || "enabled" in changes)) {
+        void setupContextMenu();
     }
 });

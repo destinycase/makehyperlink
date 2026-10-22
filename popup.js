@@ -2,97 +2,143 @@
  * MakeHyperlink Popup Script
  */
 
-document.addEventListener('DOMContentLoaded', () => {
-    const recordBtn = document.getElementById('record-btn');
-    const shortcutDisplay = document.getElementById('shortcut-display');
-    const currentShortcutTxt = document.getElementById('current-shortcut');
-    const statusMsg = document.getElementById('status-msg');
-    const enableShortcutCheckbox = document.getElementById('enable-shortcut');
+document.addEventListener("DOMContentLoaded", () => {
+    const DEFAULT_SHORTCUT_DISPLAY = "Ctrl + Alt + C";
+    const recordButton = document.getElementById("record-btn");
+    const shortcutDisplay = document.getElementById("shortcut-display");
+    const currentShortcutText = document.getElementById("current-shortcut");
+    const statusMessage = document.getElementById("status-msg");
+    const enableShortcutCheckbox = document.getElementById("enable-shortcut");
 
     let isRecording = false;
+    let stopRecordingTimer;
+    let isSaving = false;
 
-    // 초기 설정 로드
-    chrome.storage.local.get(['shortcut', 'enabled'], (result) => {
-        if (result.shortcut) {
-            currentShortcutTxt.textContent = result.shortcut.display;
-        }
-        if (result.hasOwnProperty('enabled')) {
+    function setStatus(message) {
+        statusMessage.textContent = message;
+    }
+
+    function loadSavedShortcut() {
+        chrome.storage.local.get(["shortcut"], (result) => {
+            const error = chrome.runtime.lastError;
+            if (error) {
+                if (!isRecording) {
+                    setStatus(`설정을 불러오지 못했습니다: ${error.message}`);
+                }
+                return;
+            }
+            if (!isRecording) {
+                currentShortcutText.textContent = result.shortcut?.display || DEFAULT_SHORTCUT_DISPLAY;
+            }
+        });
+    }
+
+    loadSavedShortcut();
+    chrome.storage.local.get(["enabled"], (result) => {
+        const error = chrome.runtime.lastError;
+        if (!error && typeof result.enabled === "boolean") {
             enableShortcutCheckbox.checked = result.enabled;
         }
     });
 
-    // 활성화 체크박스 이벤트
-    enableShortcutCheckbox.addEventListener('change', () => {
-        chrome.storage.local.set({ enabled: enableShortcutCheckbox.checked });
+    enableShortcutCheckbox.addEventListener("change", () => {
+        chrome.storage.local.set({ enabled: enableShortcutCheckbox.checked }, () => {
+            const error = chrome.runtime.lastError;
+            if (error) {
+                setStatus(`설정을 저장하지 못했습니다: ${error.message}`);
+            }
+        });
     });
 
-    recordBtn.addEventListener('click', () => {
-        if (!isRecording) {
-            startRecording();
-        } else {
+    recordButton.addEventListener("click", () => {
+        if (isRecording) {
             stopRecording();
+        } else {
+            startRecording();
         }
     });
 
     function startRecording() {
+        clearTimeout(stopRecordingTimer);
         isRecording = true;
-        recordBtn.textContent = '취소하기';
-        shortcutDisplay.classList.add('recording');
-        currentShortcutTxt.textContent = '키를 누르세요...';
-        statusMsg.textContent = '원하는 단축키 조합을 누르세요 (예: Ctrl + Shift + L)';
-
-        window.addEventListener('keydown', handleKeyDown);
+        recordButton.textContent = "취소하기";
+        shortcutDisplay.classList.add("recording");
+        currentShortcutText.textContent = "키를 누르세요...";
+        setStatus("원하는 단축키 조합을 누르세요 (예: Ctrl + Shift + L)");
+        window.addEventListener("keydown", handleKeyDown);
     }
 
     function stopRecording() {
+        clearTimeout(stopRecordingTimer);
+        stopRecordingTimer = undefined;
         isRecording = false;
-        recordBtn.textContent = '변경하기';
-        shortcutDisplay.classList.remove('recording');
-        
-        // 다시 로드하여 이전 상태 복구
-        chrome.storage.local.get(['shortcut'], (result) => {
-            currentShortcutTxt.textContent = result.shortcut ? result.shortcut.display : 'Ctrl + Alt + C';
-            statusMsg.textContent = "설정을 변경하려면 '변경하기' 버튼을 누르세요.";
-        });
-
-        window.removeEventListener('keydown', handleKeyDown);
+        recordButton.textContent = "변경하기";
+        shortcutDisplay.classList.remove("recording");
+        loadSavedShortcut();
+        setStatus("설정을 변경하려면 '변경하기' 버튼을 누르세요.");
+        window.removeEventListener("keydown", handleKeyDown);
     }
 
-    function handleKeyDown(e) {
-        // 기능키 단독 입력은 무시 (Ctrl, Shift, Alt, Meta)
-        if (['Control', 'Shift', 'Alt', 'Meta'].includes(e.key)) {
+    function getKeyLabel(code) {
+        if (code.startsWith("Key")) {
+            return code.slice(3);
+        }
+        if (code.startsWith("Digit")) {
+            return code.slice(5);
+        }
+        return code;
+    }
+
+    function handleKeyDown(event) {
+        if (!isRecording || isSaving || event.isComposing || event.repeat || ["Control", "Shift", "Alt", "Meta"].includes(event.key)) {
             return;
         }
 
-        e.preventDefault();
-
+        event.preventDefault();
+        if (event.key === "Escape") {
+            stopRecording();
+            return;
+        }
+        if (!(event.ctrlKey || event.altKey || event.metaKey) || !event.code) {
+            setStatus("Ctrl, Alt ?? Meta? ?? ?? ?? ????.");
+            return;
+        }
         const parts = [];
-        if (e.ctrlKey) parts.push('Ctrl');
-        if (e.altKey) parts.push('Alt');
-        if (e.shiftKey) parts.push('Shift');
-        if (e.metaKey) parts.push('Meta');
-        
-        // 실제 키 추가
-        const key = e.code.replace('Key', '');
-        parts.push(key);
+        if (event.ctrlKey) parts.push("Ctrl");
+        if (event.altKey) parts.push("Alt");
+        if (event.shiftKey) parts.push("Shift");
+        if (event.metaKey) parts.push("Meta");
+        parts.push(getKeyLabel(event.code));
 
-        const display = parts.join(' + ');
-        
-        // 저장할 데이터 객체
+        const display = parts.join(" + ");
         const shortcutData = {
-            display: display,
-            ctrlKey: e.ctrlKey,
-            altKey: e.altKey,
-            shiftKey: e.shiftKey,
-            metaKey: e.metaKey,
-            code: e.code
+            display,
+            ctrlKey: event.ctrlKey,
+            altKey: event.altKey,
+            shiftKey: event.shiftKey,
+            metaKey: event.metaKey,
+            code: event.code
         };
 
-        // 크롬 스토리지에 저장
+        isSaving = true;
+        recordButton.disabled = true;
         chrome.storage.local.set({ shortcut: shortcutData }, () => {
-            currentShortcutTxt.textContent = display;
-            statusMsg.textContent = '단축키가 성공적으로 저장되었습니다!';
-            setTimeout(stopRecording, 1000);
+            isSaving = false;
+            recordButton.disabled = false;
+            const error = chrome.runtime.lastError;
+            if (error) {
+                if (isRecording) {
+                    setStatus(`단축키를 저장하지 못했습니다: ${error.message}`);
+                }
+                return;
+            }
+            if (!isRecording) {
+                return;
+            }
+
+            stopRecording();
+            currentShortcutText.textContent = display;
+            setStatus("???? ????? ???????!");
         });
     }
 });
