@@ -276,3 +276,13 @@ test('link context menu sends destination to content and saves returned item',as
  assert.equal(requests[1].action,'COPY_EXISTING_LINK');assert.equal(requests[1].url,item.url);
  assert.equal(b.data.history[0].text,item.text);assert.equal(b.badges[4],'OK');
 });
+
+test('help opens modally, prevents repeated opens and returns focus after close',()=>{
+ const handlers={};let opens=0,focused=false;
+ const dialog={open:false,showModal(){this.open=true;opens++;},close(){this.open=false;handlers.closed();},addEventListener:(_,fn)=>handlers.closed=fn};
+ const open={focus(){focused=true;},addEventListener:(_,fn)=>handlers.open=fn};
+ const close={addEventListener:(_,fn)=>handlers.close=fn};
+ vm.runInNewContext(fs.readFileSync(srcPath('help.js'),'utf8'),{document:{getElementById:id=>({'help-dialog':dialog,'help-open':open,'help-close':close}[id]),addEventListener:(_,fn)=>fn()}});
+ handlers.open();handlers.open();assert.equal(opens,1);assert.equal(dialog.open,true);
+ handlers.close();assert.equal(dialog.open,false);assert.equal(focused,true);
+});

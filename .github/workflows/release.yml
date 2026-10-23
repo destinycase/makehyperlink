@@ -35,6 +35,7 @@ jobs:
             sidepanel.html \
             sidepanel.js \
             history.js \
+            help.js \
             sidepanel.css \
             icons/
 
@@ -44,17 +45,13 @@ jobs:
           files: release/makehyperlink-${{ github.ref_name }}.zip
           name: Release ${{ github.ref_name }}
           body: |
-            MakeHyperlink 확장 프로그램의 새로운 버전이 릴리스되었습니다.
-            
-            ### 변경 사항
-            - 중복된 activeTab 권한 제거
-            - 사용자·개발자 가이드 및 release 폴더 기반 배포 파일 관리
-            - 브라우저 사이드 패널에서 복사 히스토리 확인, 다시 복사, 링크 이동 및 삭제
-            - 최근 100개 로컬 저장 및 중복 항목 갱신
-            - 텍스트를 선택하지 않으면 탭 제목과 주소로 하이퍼링크 복사
-            - 복사 성공·실패 배지를 1초간 표시
-            - 컴팩트한 목록과 스크롤 위치 유지
-            - 단축키 복구, 클립보드 권한 및 제한 페이지 안내 개선
+            MakeHyperlink v2.1.3
+
+            - Add in-panel help dialog with copy, list, shortcut and status guidance.
+            - Organize copying instructions into three methods; omit paste instructions.
+            - Support close button, Escape and focus restoration.
+            - Include help.js in local and automated release packages.
+            - Update user and developer documentation.
           draft: false
           prerelease: false
         env:

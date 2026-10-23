@@ -2,7 +2,7 @@
 
 [README로 돌아가기](../README.md) · [유저 가이드](user-guide.md)
 
-현재 코드와 배포 버전 **2.1.2**를 기준으로 설명합니다.
+현재 코드와 배포 버전 **2.1.3**를 기준으로 설명합니다.
 
 ## 개발 환경
 
@@ -30,6 +30,7 @@ cd makehyperlink
 | `src/sidepanel.html` / `src/sidepanel.css` | 브라우저 패널 화면과 컴팩트한 목록 레이아웃 |
 | `src/sidepanel.js` | 단축키 녹화·저장, 활성화 스위치, 설정 변경 반영 |
 | `src/history.js` | 목록 렌더링, 링크 이동, 다시 복사, 삭제, 실시간 갱신 |
+| `src/help.js` | 사용법 모달 열기·닫기와 닫힌 뒤 포커스 복원 |
 | `tests/regression.test.cjs` | 콘텐츠·백그라운드·설정 회귀 테스트 |
 | `tests/history.test.cjs` | 히스토리 UI, 복사 형식, 목록 갱신·스크롤 테스트 |
 | `build.ps1` | 배포용 ZIP 생성 |
@@ -63,6 +64,8 @@ HTML 텍스트와 URL 속성은 이스케이프합니다. 일반 텍스트 형�
 
 패널의 복사 버튼은 패널 문서의 클립보드 API를 사용합니다. 이후 패널이 속한 `windowId`를 함께 보내 해당 창의 활성 탭에 배지를 표시합니다. `chrome.storage.onChanged`로 여러 탭·패널의 기록과 설정 변경을 반영합니다.
 
+사용법은 `sidepanel.html`의 네이티브 `<dialog>`와 `help.js`로 구성합니다. `showModal()`을 사용해 배경 상호작용과 포커스를 제한하고 브라우저의 Esc 닫기를 지원합니다. 닫힌 뒤 도움말 버튼에 포커스를 복원합니다. 팝업 콘텐츠는 복사 하기·목록 관리·단축키 설정·동작 확인으로 구분하며 웹페이지 DOM에 접근하지 않습니다. 로컬 빌드와 Actions ZIP 모두 `help.js`를 포함합니다.
+
 목록 갱신 시 `scrollTop`을 복원하고, 제목·URL·시간을 줄여 표시합니다. 전체 문자열은 `title` 속성으로 제공합니다. 외부 입력은 `textContent`로 렌더링하며, 주소 링크에는 `noopener noreferrer`를 설정합니다.
 
 ## 메시지
@@ -71,6 +74,7 @@ HTML 텍스트와 URL 속성은 이스케이프합니다. 일반 텍스트 형�
 | --- | --- | --- |
 | `PING` | 백그라운드 → 콘텐츠 | 스크립트 생존 확인, `ALIVE` 응답 |
 | `COPY_LINK` | 백그라운드 → 콘텐츠 | 선택 스냅샷 또는 제목으로 복사, `SUCCESS`와 `item` 또는 `ERROR` 응답 |
+| `COPY_EXISTING_LINK` | 백그라운드 → 콘텐츠 | 우클릭한 링크의 표시 텍스트와 목적 주소 복사 |
 | `GET_TAB_DETAILS` | 콘텐츠 → 백그라운드 | `sender.tab`의 제목·URL 반환 |
 | `COPY_RESULT` | 콘텐츠·패널 → 백그라운드 | 성공 시 히스토리 저장, 성공·실패 배지 표시 |
 | `DELETE_HISTORY` | 패널 → 백그라운드 | ID가 있으면 개별 삭제, 없으면 전체 삭제 |
@@ -131,7 +135,7 @@ node --check src/sidepanel.js
 node --check src/history.js
 ```
 
-현재 회귀 테스트는 36개입니다. 테스트는 Chrome API·문서·클립보드를 모의한 단위·흐름 검증이며 실제 브라우저에서의 모든 포커스·권한·편집기 동작을 보장하지 않습니다.
+현재 회귀 테스트는 37개입니다. 테스트는 Chrome API·문서·클립보드를 모의한 단위·흐름 검증이며 실제 브라우저에서의 모든 포커스·권한·편집기 동작을 보장하지 않습니다.
 
 변경한 확장 프로그램을 새로고침하고 다음 항목을 실제 브라우저에서 확인합니다.
 
@@ -152,7 +156,7 @@ node --check src/history.js
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
 ```
 
-`src/manifest.json`의 버전으로 `release/makehyperlink-v<버전>.zip`을 생성합니다. `release/` 폴더가 없으면 자동으로 생성하고, 같은 이름의 ZIP이 있으면 교체합니다. 이전 버전의 ZIP은 그대로 보관합니다. ZIP 루트에는 manifest·background·content·sidepanel·history 파일과 `icons/`만 포함하며, 문서·테스트·Git 데이터는 포함하지 않습니다. GitHub Actions도 `release/`에 ZIP을 생성해 Release에 첨부합니다.
+`src/manifest.json`의 버전으로 `release/makehyperlink-v<버전>.zip`을 생성합니다. `release/` 폴더가 없으면 자동으로 생성하고, 같은 이름의 ZIP이 있으면 교체합니다. 이전 버전의 ZIP은 그대로 보관합니다. ZIP 루트에는 manifest·background·content·sidepanel·history·help 파일과 `icons/`만 포함하며, 문서·테스트·Git 데이터는 포함하지 않습니다. GitHub Actions도 `release/`에 ZIP을 생성해 Release에 첨부합니다.
 
 ### GitHub Release
 

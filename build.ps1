@@ -19,6 +19,7 @@ try {
         "sidepanel.html",
         "sidepanel.js",
         "history.js",
+        "help.js",
         "sidepanel.css",
         "icons"
     )
