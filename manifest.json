@@ -1,25 +1,33 @@
 {
   "manifest_version": 3,
+  "minimum_chrome_version": "114",
   "name": "MakeHyperlink",
-  "version": "1.1.2",
-  "description": "드래그한 텍스트를 현재 페이지 URL과 연결된 하이퍼링크로 복사합니다.",
+  "version": "2.0.1",
+  "description": "선택한 텍스트 또는 탭 제목을 하이퍼링크로 복사하고, 사이드 패널에서 복사 히스토리를 관리합니다.",
   "permissions": [
     "activeTab",
+    "clipboardWrite",
     "contextMenus",
     "storage",
+    "sidePanel",
     "scripting"
   ],
   "background": {
     "service_worker": "background.js"
   },
+  "host_permissions": [
+    "<all_urls>"
+  ],
   "action": {
-    "default_popup": "popup.html",
-    "default_title": "MakeHyperlink 설정",
+    "default_title": "MakeHyperlink 사이드 패널 열기",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
     }
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
   },
   "content_scripts": [
     {
@@ -28,9 +36,6 @@
       ],
       "js": [
         "content.js"
-      ],
-      "css": [
-        "style.css"
       ],
       "all_frames": true,
       "match_about_blank": true

@@ -1,5 +1,5 @@
 /**
- * MakeHyperlink Popup Script
+ * MakeHyperlink Side Panel Settings
  */
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -34,6 +34,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     loadSavedShortcut();
+    chrome.storage.onChanged.addListener((changes, area) => {
+        if (area !== "local") return;
+        if (changes.shortcut && !isRecording) loadSavedShortcut();
+        if (changes.enabled) enableShortcutCheckbox.checked = changes.enabled.newValue !== false;
+    });
     chrome.storage.local.get(["enabled"], (result) => {
         const error = chrome.runtime.lastError;
         if (!error && typeof result.enabled === "boolean") {
@@ -61,7 +66,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function startRecording() {
         clearTimeout(stopRecordingTimer);
         isRecording = true;
-        recordButton.textContent = "취소하기";
+        recordButton.textContent = "취소";
         shortcutDisplay.classList.add("recording");
         currentShortcutText.textContent = "키를 누르세요...";
         setStatus("원하는 단축키 조합을 누르세요 (예: Ctrl + Shift + L)");
@@ -72,10 +77,10 @@ document.addEventListener("DOMContentLoaded", () => {
         clearTimeout(stopRecordingTimer);
         stopRecordingTimer = undefined;
         isRecording = false;
-        recordButton.textContent = "변경하기";
+        recordButton.textContent = "변경";
         shortcutDisplay.classList.remove("recording");
         loadSavedShortcut();
-        setStatus("설정을 변경하려면 '변경하기' 버튼을 누르세요.");
+        setStatus("");
         window.removeEventListener("keydown", handleKeyDown);
     }
 
@@ -100,7 +105,7 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
         if (!(event.ctrlKey || event.altKey || event.metaKey) || !event.code) {
-            setStatus("Ctrl, Alt ?? Meta? ?? ?? ?? ????.");
+            setStatus("Ctrl, Alt 또는 Meta와 다른 키를 함께 눌러 주세요.");
             return;
         }
         const parts = [];
@@ -138,7 +143,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             stopRecording();
             currentShortcutText.textContent = display;
-            setStatus("???? ????? ???????!");
+            setStatus("단축키가 저장되었습니다!");
         });
     }
 });

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MakeHyperlink 사이드 패널</title>
+    <link rel="stylesheet" href="sidepanel.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <div class="logo-icon">✓</div>
+                <h1>MakeHyperlink</h1>
+            </div>
+            <label class="shortcut-toggle" title="단축키 활성화">
+                <span>단축키</span>
+                <span class="switch">
+                    <input type="checkbox" id="enable-shortcut" aria-label="단축키 활성화" checked>
+                    <span class="slider round"></span>
+                </span>
+            </label>
+        </header>
+
+        <main>
+            <section class="shortcut-section">
+                
+                <div class="shortcut-input-group">
+                    <div id="shortcut-display" class="shortcut-box">
+                        <span id="current-shortcut">Ctrl + Alt + C</span>
+                    </div>
+                    <button id="record-btn" class="btn-primary">변경</button>
+                </div>
+                <p id="status-msg" class="status-msg" role="status" aria-live="polite"></p>
+            </section>
+            <section class="history-section" aria-labelledby="history-heading">
+                <div class="history-heading">
+                    <h2 id="history-heading" title="이 브라우저에 최근 100개까지 저장">히스토리 <span id="history-count">0</span></h2>
+                    <button id="clear-history" class="btn-small" type="button" disabled>전체 삭제</button>
+                </div>
+                <p id="history-status" class="history-status" role="status" aria-live="polite"></p>
+                <ul id="history-list" class="history-list" aria-label="복사한 링크 목록"></ul>
+                <p id="history-empty" class="description">아직 복사한 링크가 없습니다.</p>
+            </section>
+        </main>
+
+    </div>
+    <script src="sidepanel.js"></script>
+    <script src="history.js"></script>
+</body>
+</html>

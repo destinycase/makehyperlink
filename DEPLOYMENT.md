@@ -14,8 +14,8 @@
 - `manifest.json`
 - `background.js`
 - `content.js`
-- `style.css`
-- `popup.html`, `popup.js`, `popup.css`
+- `sidepanel.html`, `sidepanel.js`, `sidepanel.css`
+- `history.js`
 - `icons/` 폴더 전체
 
 ### 제외해야 할 파일 (보안 및 용량 이슈):

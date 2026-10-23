@@ -3,11 +3,18 @@
  */
 
 (function () {
-    if (window.hasMakeHyperlinkLoaded) {
-        console.log("MakeHyperlink: 이미 로드되어 있습니다.");
+    if (typeof window.hasMakeHyperlinkLoaded === "function" && window.hasMakeHyperlinkLoaded()) {
         return;
     }
-    window.hasMakeHyperlinkLoaded = true;
+    // A boolean from an old, invalidated extension context must not block reload.
+    window.hasMakeHyperlinkLoaded = () => {
+        try {
+            chrome.runtime.getManifest();
+            return true;
+        } catch {
+            return false;
+        }
+    };
 
     const DEFAULT_SHORTCUT = {
         ctrlKey: true,
@@ -19,6 +26,17 @@
     };
 
     let copyInProgress = false;
+    function reportCopyResult(success, message, item) {
+        try {
+            chrome.runtime.sendMessage({ action: "COPY_RESULT", success, message, item }, () => {
+                // Badge delivery must not affect the clipboard result.
+                const error = chrome.runtime.lastError;
+                if (error) console.warn("MakeHyperlink: 배지 알림 실패", error.message);
+            });
+        } catch (error) {
+            console.warn("MakeHyperlink: 배지 알림 실패", error);
+        }
+    }
 
     function escapeHtml(value) {
         return String(value).replace(/[&<>"']/g, (character) => ({
@@ -48,20 +66,37 @@
         return window.getSelection()?.toString().trim() || "";
     }
 
+    function getTabDetails() {
+        const fallback = { title: document.title || "", url: window.location.href };
+        return new Promise((resolve) => {
+            try {
+                chrome.runtime.sendMessage({ action: "GET_TAB_DETAILS" }, (response) => {
+                    if (chrome.runtime.lastError || !response?.url) return resolve(fallback);
+                    resolve(response);
+                });
+            } catch {
+                resolve(fallback);
+            }
+        });
+    }
+
     async function copyHyperlink(request = {}) {
         if (copyInProgress) {
             return false;
         }
 
-        const selectedText = typeof request.selectedText === "string"
+        let selectedText = typeof request.selectedText === "string"
             ? request.selectedText.trim() : getSelectedText();
+        let currentUrl = request.url || window.location.href;
         if (!selectedText) {
-            console.log("MakeHyperlink: 선택된 텍스트가 없습니다.");
-            return false;
+            copyInProgress = true;
+            const tab = typeof request.title === "string"
+                ? { title: request.title, url: currentUrl } : await getTabDetails();
+            currentUrl = tab.url || currentUrl;
+            selectedText = tab.title?.trim() || currentUrl;
         }
 
         copyInProgress = true;
-        const currentUrl = request.url || window.location.href;
         const htmlLink = createHyperlinkHtml(selectedText, currentUrl);
         const plainTextLink = `[${selectedText}](${currentUrl})`;
 
@@ -72,8 +107,7 @@
                     "text/plain": new Blob([plainTextLink], { type: "text/plain" })
                 });
                 await navigator.clipboard.write([clipboardItem]);
-                console.log("MakeHyperlink: Clipboard API 복사 성공");
-                return true;
+                return { text: selectedText, url: currentUrl };
             } catch (error) {
                 console.warn("MakeHyperlink: Clipboard API 실패, 폴백 시도...", error?.message || error);
             }
@@ -95,8 +129,7 @@
                 if (!document.execCommand("copy") || !clipboardDataWritten) {
                     throw new Error("Clipboard write failed");
                 }
-                console.log("MakeHyperlink: execCommand 복사 성공");
-                return true;
+                return { text: selectedText, url: currentUrl };
             } finally {
                 window.removeEventListener("copy", handleCopy, true);
             }
@@ -137,16 +170,16 @@
         if ("shortcut" in changes) {
             currentShortcut = isValidShortcut(changes.shortcut.newValue)
                 ? { ...DEFAULT_SHORTCUT, ...changes.shortcut.newValue } : { ...DEFAULT_SHORTCUT };
-            console.log("MakeHyperlink: 단축키 변경됨", currentShortcut.display);
         }
         if ("enabled" in changes) {
             isEnabled = changes.enabled.newValue === true;
-            console.log("MakeHyperlink: 활성화 상태 변경됨", isEnabled);
         }
     });
 
     window.addEventListener("keydown", (event) => {
-        if (!isEnabled || event.repeat || event.isComposing) {
+        // IMEs can report composition during Ctrl/Alt shortcuts as well.
+        // Match the explicit modifier combination and physical key below.
+        if (!isEnabled || event.repeat) {
             return;
         }
 
@@ -157,12 +190,13 @@
             && event.code === currentShortcut.code;
 
         if (isMatch) {
-            if (!getSelectedText()) {
-                return;
-            }
             event.preventDefault();
             event.stopImmediatePropagation();
-            void copyHyperlink();
+            void copyHyperlink().then((item) => {
+                reportCopyResult(!!item, item ? "하이퍼링크 복사 완료!" : "복사에 실패했습니다.", item || undefined);
+            }).catch((error) => {
+                reportCopyResult(false, error?.message || "복사에 실패했습니다.");
+            });
         }
     }, true);
 
@@ -173,10 +207,10 @@
         }
 
         if (request.action === "COPY_LINK") {
-            copyHyperlink(request).then((success) => {
-                sendResponse(success
-                    ? { status: "SUCCESS" }
-                    : { status: "ERROR", message: "복사할 텍스트가 없거나 복사에 실패했습니다." });
+            copyHyperlink(request).then((item) => {
+                sendResponse(item
+                    ? { status: "SUCCESS", item }
+                    : { status: "ERROR", message: "복사에 실패했습니다." });
             }).catch((error) => {
                 sendResponse({ status: "ERROR", message: error?.message || "복사에 실패했습니다." });
             });
@@ -186,5 +220,4 @@
         return false;
     });
 
-    console.log("MakeHyperlink: 확장이 로드되었습니다. (Ctrl+Alt+C)");
 })();

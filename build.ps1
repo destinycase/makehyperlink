@@ -1,9 +1,9 @@
-# MakeHyperlink Local Build Script (Windows PowerShell)
+﻿# MakeHyperlink Local Build Script (Windows PowerShell)
 
 $PSScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 Push-Location $PSScriptRoot
 
-$version = (Get-Content manifest.json | ConvertFrom-Json).version
+$version = (Get-Content manifest.json -Encoding UTF8 | ConvertFrom-Json).version
 $zipName = "makehyperlink-v$version.zip"
 
 Write-Host "MakeHyperlink 빌드를 시작합니다 (버전: $version)..." -ForegroundColor Cyan
@@ -16,10 +16,10 @@ $files = @(
     "manifest.json",
     "background.js",
     "content.js",
-    "style.css",
-    "popup.html",
-    "popup.js",
-    "popup.css",
+    "sidepanel.html",
+    "sidepanel.js",
+    "history.js",
+    "sidepanel.css",
     "icons"
 )
 
