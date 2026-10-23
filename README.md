@@ -2,7 +2,7 @@
 
 선택한 텍스트 또는 탭 제목을 현재 페이지 주소와 연결된 하이퍼링크로 복사하는 브라우저 확장 프로그램입니다. 사이드 패널에서 복사한 링크를 다시 사용하고 관리할 수 있습니다.
 
-현재 버전은 **2.0.2**이며, Chrome 114 이상의 Manifest V3·Side Panel API를 사용합니다. 다른 Chromium 계열 브라우저는 해당 API 지원 여부를 확인해야 합니다.
+현재 버전은 **2.1.2**이며, Chrome 114 이상의 Manifest V3·Side Panel API를 사용합니다. 다른 Chromium 계열 브라우저는 해당 API 지원 여부를 확인해야 합니다.
 
 ## 주요 기능
 
@@ -33,11 +33,10 @@
 | --- | --- |
 | [유저 가이드](docs/user-guide.md) | 설치, 복사, 단축키 설정, 히스토리 관리, 문제 해결 |
 | [개발자 가이드](docs/developer-guide.md) | 개발 환경, 구조, 메시지, 저장 데이터, 테스트, 빌드와 배포 |
-| [배포 안내](DEPLOYMENT.md) | 배포 절차 문서 위치 |
 
 ## 개발 시작
 
-별도 패키지 설치나 번들링 없이 소스 폴더를 확장 프로그램으로 로드합니다. 테스트에는 Node.js 24를 사용합니다.
+별도 패키지 설치나 번들링 없이 `src` 폴더를 확장 프로그램으로 로드합니다. 테스트에는 Node.js 24를 사용합니다.
 
 ```powershell
 git clone https://github.com/destinycase/makehyperlink.git
@@ -46,8 +45,15 @@ node --test tests/regression.test.cjs tests/history.test.cjs
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
 ```
 
-빌드 결과는 `manifest.json` 버전을 기준으로 `release/makehyperlink-v<버전>.zip`에 생성됩니다. 배포 ZIP은 버전별로 `release/` 폴더에서 관리합니다. 자세한 구조와 배포 절차는 [개발자 가이드](docs/developer-guide.md)를 참고하세요.
+빌드 결과는 `src/manifest.json` 버전을 기준으로 `release/makehyperlink-v<버전>.zip`에 생성됩니다. 배포 ZIP은 버전별로 `release/` 폴더에서 관리합니다. 자세한 구조와 배포 절차는 [개발자 가이드](docs/developer-guide.md)를 참고하세요.
 
 ## 라이선스
 
 [MIT License](LICENSE)
+
+```text
+src/       # Extension source, manifest and icons
+tests/     # Regression tests
+docs/      # User and developer guides
+release/   # Versioned distribution ZIPs
+```

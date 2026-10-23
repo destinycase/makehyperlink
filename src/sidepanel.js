@@ -13,6 +13,15 @@ document.addEventListener("DOMContentLoaded", () => {
     let isRecording = false;
     let stopRecordingTimer;
     let isSaving = false;
+    let isEnabled = true;
+
+    function applyEnabled(enabled) {
+        isEnabled = enabled;
+        enableShortcutCheckbox.checked = enabled;
+        if (!enabled && isRecording) stopRecording();
+        recordButton.disabled = !enabled || isSaving;
+        shortcutDisplay.classList[enabled ? "remove" : "add"]("is-disabled");
+    }
 
     function setStatus(message) {
         statusMessage.textContent = message;
@@ -37,19 +46,22 @@ document.addEventListener("DOMContentLoaded", () => {
     chrome.storage.onChanged.addListener((changes, area) => {
         if (area !== "local") return;
         if (changes.shortcut && !isRecording) loadSavedShortcut();
-        if (changes.enabled) enableShortcutCheckbox.checked = changes.enabled.newValue !== false;
+        if (changes.enabled) applyEnabled(changes.enabled.newValue !== false);
     });
     chrome.storage.local.get(["enabled"], (result) => {
         const error = chrome.runtime.lastError;
         if (!error && typeof result.enabled === "boolean") {
-            enableShortcutCheckbox.checked = result.enabled;
+            applyEnabled(result.enabled);
         }
     });
 
     enableShortcutCheckbox.addEventListener("change", () => {
+        const previous = isEnabled;
+        applyEnabled(enableShortcutCheckbox.checked);
         chrome.storage.local.set({ enabled: enableShortcutCheckbox.checked }, () => {
             const error = chrome.runtime.lastError;
             if (error) {
+                applyEnabled(previous);
                 setStatus(`설정을 저장하지 못했습니다: ${error.message}`);
             }
         });
@@ -64,9 +76,11 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     function startRecording() {
+        if (!isEnabled || isSaving) return;
         clearTimeout(stopRecordingTimer);
         isRecording = true;
-        recordButton.textContent = "취소";
+        recordButton.className = "btn-primary icon-button icon-cancel";
+        recordButton.title = recordButton.ariaLabel = "\uB2E8\uCD95\uD0A4 \uBCC0\uACBD \uCDE8\uC18C";
         shortcutDisplay.classList.add("recording");
         currentShortcutText.textContent = "키를 누르세요...";
         setStatus("원하는 단축키 조합을 누르세요 (예: Ctrl + Shift + L)");
@@ -77,7 +91,8 @@ document.addEventListener("DOMContentLoaded", () => {
         clearTimeout(stopRecordingTimer);
         stopRecordingTimer = undefined;
         isRecording = false;
-        recordButton.textContent = "변경";
+        recordButton.className = "btn-primary icon-button icon-edit";
+        recordButton.title = recordButton.ariaLabel = "\uB2E8\uCD95\uD0A4 \uBCC0\uACBD";
         shortcutDisplay.classList.remove("recording");
         loadSavedShortcut();
         setStatus("");
@@ -95,7 +110,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function handleKeyDown(event) {
-        if (!isRecording || isSaving || event.isComposing || event.repeat || ["Control", "Shift", "Alt", "Meta"].includes(event.key)) {
+        if (!isEnabled || !isRecording || isSaving || event.isComposing || event.repeat || ["Control", "Shift", "Alt", "Meta"].includes(event.key)) {
             return;
         }
 
@@ -129,7 +144,7 @@ document.addEventListener("DOMContentLoaded", () => {
         recordButton.disabled = true;
         chrome.storage.local.set({ shortcut: shortcutData }, () => {
             isSaving = false;
-            recordButton.disabled = false;
+            recordButton.disabled = !isEnabled;
             const error = chrome.runtime.lastError;
             if (error) {
                 if (isRecording) {
@@ -143,7 +158,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             stopRecording();
             currentShortcutText.textContent = display;
-            setStatus("단축키가 저장되었습니다!");
+
         });
     }
 });

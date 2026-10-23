@@ -66,6 +66,19 @@
         return window.getSelection()?.toString().trim() || "";
     }
 
+    let contextLink = null;
+    window.addEventListener("contextmenu", (event) => {
+        // Capture a snapshot without changing page DOM, selection or focus.
+        const path = typeof event.composedPath === "function" ? event.composedPath() : [event.target];
+        const link = path.find((node) => node?.matches?.("a[href], area[href]"))
+            || event.target?.closest?.("a[href], area[href]");
+        contextLink = link ? {
+            url: link.href,
+            text: (link.innerText || link.textContent || link.getAttribute("aria-label")
+                || link.querySelector?.("img[alt]")?.alt || link.title || "").trim()
+        } : null;
+    }, true);
+
     function getTabDetails() {
         const fallback = { title: document.title || "", url: window.location.href };
         return new Promise((resolve) => {
@@ -206,7 +219,15 @@
             return false;
         }
 
-        if (request.action === "COPY_LINK") {
+        if (request.action === "COPY_LINK" || request.action === "COPY_EXISTING_LINK") {
+            if (request.action === "COPY_EXISTING_LINK") {
+                if (typeof request.url !== "string" || !/^(https?:|file:|ftp:)/i.test(request.url)) {
+                    sendResponse({ status: "ERROR", message: "Unsupported link address" });
+                    return false;
+                }
+                request = { url: request.url, selectedText: contextLink?.url === request.url
+                    ? contextLink.text || request.url : request.url };
+            }
             copyHyperlink(request).then((item) => {
                 sendResponse(item
                     ? { status: "SUCCESS", item }

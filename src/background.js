@@ -3,6 +3,7 @@
  */
 
 const MENU_ID = "make-hyperlink-context-menu";
+const LINK_MENU_ID = "copy-existing-hyperlink";
 const DEFAULT_SHORTCUT_DISPLAY = "Ctrl+Alt+C";
 const injectionPromises = new Map();
 let contextMenuUpdate = Promise.resolve();
@@ -163,6 +164,11 @@ function setupContextMenu() {
                 title,
                 contexts: ["selection", "page", "editable"]
             });
+            await createContextMenu({
+                id: LINK_MENU_ID,
+                title: "\uC774 \uB9C1\uD06C\uB97C \uD558\uC774\uD37C\uB9C1\uD06C\uB85C \uBCF5\uC0AC",
+                contexts: ["link"]
+            });
         })
         .catch((error) => {
             console.error("MakeHyperlink: 컨텍스트 메뉴 설정 실패", error);
@@ -257,7 +263,7 @@ chrome.runtime.onInstalled.addListener(() => {
 void setupContextMenu();
 
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
-    if (info.menuItemId !== MENU_ID || !tab?.id) {
+    if (![MENU_ID, LINK_MENU_ID].includes(info.menuItemId) || !tab?.id) {
         return;
     }
 
@@ -265,7 +271,10 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
         const frameId = info.frameId ?? 0;
         const pageUrl = tab.url || info.pageUrl;
         await ensureContentScriptInjected(tab.id, frameId, pageUrl);
-        const response = await sendMessage(tab.id, frameId, { action: "COPY_LINK", selectedText: info.selectionText, url: info.pageUrl || tab.url, title: tab.title });
+        const request = info.menuItemId === LINK_MENU_ID
+            ? { action: "COPY_EXISTING_LINK", url: info.linkUrl }
+            : { action: "COPY_LINK", selectedText: info.selectionText, url: info.pageUrl || tab.url, title: tab.title };
+        const response = await sendMessage(tab.id, frameId, request);
         await recordCopyResult(tab.id, response?.status === "SUCCESS", response?.message, response?.item);
         if (response?.status !== "SUCCESS") {
             console.warn("MakeHyperlink: 복사 처리 실패", response?.message || "알 수 없는 오류");

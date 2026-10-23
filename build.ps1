@@ -1,7 +1,7 @@
 ﻿# MakeHyperlink Local Build Script (Windows PowerShell)
 
 $ErrorActionPreference = "Stop"
-Push-Location $PSScriptRoot
+Push-Location (Join-Path $PSScriptRoot "src")
 
 try {
     $version = (Get-Content manifest.json -Encoding UTF8 | ConvertFrom-Json).version

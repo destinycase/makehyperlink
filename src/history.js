@@ -51,7 +51,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }
             success = true;
-            status.textContent = "하이퍼링크를 다시 복사했습니다.";
+            status.textContent = "";
         } catch {
             status.textContent = "복사에 실패했습니다. 다시 시도해 주세요.";
         } finally {
@@ -65,10 +65,12 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    async function removeItem(id) {
+    async function removeItem(id, button) {
+        if (button.disabled) return;
+        button.disabled = true;
         try {
             await send({ action: "DELETE_HISTORY", id });
-            status.textContent = id ? "항목을 삭제했습니다." : "히스토리를 모두 삭제했습니다.";
+            status.textContent = "";
             loadHistory();
         } catch {
             status.textContent = "삭제하지 못했습니다. 다시 시도해 주세요.";
@@ -78,7 +80,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function renderHistory(history) {
         const scrollTop = list.scrollTop;
         list.replaceChildren();
-        count.textContent = String(history.length);
+        count.textContent = `${history.length} / 100`;
         empty.hidden = history.length > 0;
         list.hidden = history.length === 0;
         clear.disabled = history.length === 0;
@@ -107,15 +109,18 @@ document.addEventListener("DOMContentLoaded", () => {
             time.title = Number.isNaN(date.getTime()) ? "" : date.toLocaleString("ko-KR");
             const copy = document.createElement("button");
             copy.type = "button";
-            copy.className = "btn-small";
-            copy.textContent = "복사";
+            copy.className = "btn-small icon-button icon-copy";
+
+            copy.ariaLabel = item.text + " \uBCF5\uC0AC";
             copy.title = "이 항목을 다시 복사";
             copy.addEventListener("click", () => { void copyItem(item, copy); });
             const remove = document.createElement("button");
             remove.type = "button";
-            remove.className = "btn-small";
-            remove.textContent = "삭제";
-            remove.addEventListener("click", () => { void removeItem(item.id); });
+            remove.className = "btn-small btn-remove icon-button icon-delete";
+
+            remove.title = "\uC774 \uD56D\uBAA9 \uC0AD\uC81C";
+            remove.ariaLabel = item.text + " \uC0AD\uC81C";
+            remove.addEventListener("click", () => { void removeItem(item.id, remove); });
             meta.append(time, copy, remove);
             row.append(text, url, meta);
             list.appendChild(row);
@@ -135,7 +140,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    clear.addEventListener("click", () => { void removeItem(); });
+    clear.addEventListener("click", () => { void removeItem(undefined, clear); });
     chrome.storage.onChanged.addListener((changes, area) => {
         if (area === "local" && changes.history) loadHistory();
     });

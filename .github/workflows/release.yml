@@ -27,7 +27,8 @@ jobs:
         run: |
           mkdir -p release
           rm -f release/makehyperlink-${{ github.ref_name }}.zip
-          zip -r release/makehyperlink-${{ github.ref_name }}.zip \
+          cd src
+          zip -r ../release/makehyperlink-${{ github.ref_name }}.zip \
             manifest.json \
             background.js \
             content.js \

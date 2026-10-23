@@ -2,6 +2,8 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const vm=require('node:vm');
 const fs=require('node:fs');
+const path=require('node:path');
+const srcPath=name=>path.join(__dirname,'..','src',name);
 
 function panel({fallback=false,denied=false}={}) {
  class Element {
@@ -16,7 +18,7 @@ function panel({fallback=false,denied=false}={}) {
  const copied={},messages=[],handlers={};let onStorageChanged;
  const chrome={windows:{getCurrent:async()=>({id:9})},storage:{local:{get:(_,cb)=>cb({history})},onChanged:{addListener:fn=>onStorageChanged=fn}},runtime:{sendMessage:(request,cb)=>{messages.push(request);if(request.action==='DELETE_HISTORY')history.splice(0);cb({status:'SUCCESS'});}}};
  const document={getElementById:id=>elements[id],createElement:tag=>new Element(tag),addEventListener:(_,fn)=>fn(),execCommand:()=>{if(denied)return false;handlers.copy({clipboardData:{setData:(type,value)=>copied[type]=value},preventDefault(){},stopImmediatePropagation(){}});return true;}};
- vm.runInNewContext(fs.readFileSync('history.js','utf8'),{document,chrome,window:{addEventListener:(name,fn)=>handlers[name]=fn,removeEventListener:name=>delete handlers[name]},Blob,ClipboardItem:class{constructor(data){this.data=data;}},navigator:{clipboard:{write:async items=>{if(fallback||denied)throw Error('denied');for(const [type,blob]of Object.entries(items[0].data))copied[type]=await blob.text();}}}});
+ vm.runInNewContext(fs.readFileSync(srcPath('history.js'),'utf8'),{document,chrome,window:{addEventListener:(name,fn)=>handlers[name]=fn,removeEventListener:name=>delete handlers[name]},Blob,ClipboardItem:class{constructor(data){this.data=data;}},navigator:{clipboard:{write:async items=>{if(fallback||denied)throw Error('denied');for(const [type,blob]of Object.entries(items[0].data))copied[type]=await blob.text();}}}});
  return {elements,copied,messages,history,handlers,change:onStorageChanged};
 }
 
@@ -24,7 +26,7 @@ test('history renders text safely and re-copies escaped rich links',async()=>{
  const p=panel();const row=p.elements['history-list'].children[0];
  assert.equal(row.children[0].textContent,p.history[0].text);
  assert.equal(row.children[0].title,p.history[0].text);
- assert.equal(p.elements['history-count'].textContent,'1');
+ assert.equal(p.elements['history-count'].textContent,'1 / 100');
  const link=row.children[1];assert.equal(link.tagName,'a');assert.equal(link.href,p.history[0].url);
  assert.equal(link.target,'_blank');assert.equal(link.rel,'noopener noreferrer');
  const button=row.children[2].children[1];button.listeners.click();
@@ -61,7 +63,7 @@ test('deleting an item refreshes the panel empty state',async()=>{
 test('an open panel refreshes history when a different tab copies a link',()=>{
  const p=panel();p.history.unshift({id:'2',text:'new copy',url:'https://other.example/',copiedAt:Date.now()});
  p.change({history:{newValue:p.history}},'local');
- assert.equal(p.elements['history-count'].textContent,'2');
+ assert.equal(p.elements['history-count'].textContent,'2 / 100');
  assert.equal(p.elements['history-list'].children[0].children[0].textContent,'new copy');
 });
 

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MakeHyperlink 사이드 패널</title>
+    <link rel="stylesheet" href="sidepanel.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <img class="logo-icon" src="icons/icon48.png" width="20" height="20" alt="">
+                <h1>MakeHyperlink</h1>
+            </div>
+        </header>
+
+        <main>
+            <section class="history-section" aria-labelledby="history-heading">
+                <p id="history-status" class="history-status" role="status" aria-live="polite"></p>
+                <ul id="history-list" class="history-list" aria-label="복사한 링크 목록"></ul>
+                <p id="history-empty" class="description">아직 복사한 링크가 없습니다.</p>
+                <div class="history-heading history-summary">
+                    <h2 id="history-heading" title="이 브라우저에 최근 100개까지 저장">목록 <span id="history-count">0 / 100</span></h2>
+                    <button id="clear-history" class="btn-small clear-history-button" type="button" disabled>전체 삭제</button>
+                </div>
+            </section>
+            <section class="shortcut-section">
+                
+                <label class="shortcut-toggle">
+                    <span>단축키 사용</span>
+                    <span class="switch">
+                        <input type="checkbox" id="enable-shortcut" role="switch" aria-label="단축키 사용" checked>
+                        <span class="slider"></span>
+                    </span>
+                </label>
+                <div class="shortcut-input-group">
+                    <div id="shortcut-display" class="shortcut-box">
+                        <span id="current-shortcut">Ctrl + Alt + C</span>
+                    </div>
+                    <button id="record-btn" class="btn-primary icon-button icon-edit" type="button" title="단축키 변경" aria-label="단축키 변경"></button>
+                </div>
+                <p id="status-msg" class="status-msg" role="status" aria-live="polite"></p>
+            </section>
+        </main>
+
+    </div>
+    <script src="sidepanel.js"></script>
+    <script src="history.js"></script>
+</body>
+</html>

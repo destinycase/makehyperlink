@@ -2,7 +2,7 @@
 
 [README로 돌아가기](../README.md) · [유저 가이드](user-guide.md)
 
-현재 코드와 배포 버전 **2.0.2**를 기준으로 설명합니다.
+현재 코드와 배포 버전 **2.1.2**를 기준으로 설명합니다.
 
 ## 개발 환경
 
@@ -18,30 +18,30 @@ git clone https://github.com/destinycase/makehyperlink.git
 cd makehyperlink
 ```
 
-이 작업 환경의 저장소 위치는 `D:\Project\makehyperlink`입니다. Chrome 확장 프로그램 관리 화면에서 저장소 루트를 압축 해제된 확장 프로그램으로 로드합니다.
+이 작업 환경의 저장소 위치는 `D:\Project\makehyperlink`입니다. Chrome 확장 프로그램 관리 화면에서 저장소의 `src` 폴더를 압축 해제된 확장 프로그램으로 로드합니다.
 
 ## 파일 구조
 
 | 파일 | 역할 |
 | --- | --- |
-| `manifest.json` | 버전, 권한, 서비스 워커, 콘텐츠 스크립트, 사이드 패널 등록 |
-| `background.js` | 메뉴, 배지, 히스토리 저장 큐, 동적 주입, 메시지 처리 |
-| `content.js` | 선택 텍스트 읽기, 제목 대체, HTML·텍스트 복사, 페이지 단축키 처리 |
-| `sidepanel.html` / `sidepanel.css` | 브라우저 패널 화면과 컴팩트한 목록 레이아웃 |
-| `sidepanel.js` | 단축키 녹화·저장, 활성화 스위치, 설정 변경 반영 |
-| `history.js` | 목록 렌더링, 링크 이동, 다시 복사, 삭제, 실시간 갱신 |
+| `src/manifest.json` | 버전, 권한, 서비스 워커, 콘텐츠 스크립트, 사이드 패널 등록 |
+| `src/background.js` | 메뉴, 배지, 히스토리 저장 큐, 동적 주입, 메시지 처리 |
+| `src/content.js` | 선택 텍스트 읽기, 제목 대체, HTML·텍스트 복사, 페이지 단축키 처리 |
+| `src/sidepanel.html` / `src/sidepanel.css` | 브라우저 패널 화면과 컴팩트한 목록 레이아웃 |
+| `src/sidepanel.js` | 단축키 녹화·저장, 활성화 스위치, 설정 변경 반영 |
+| `src/history.js` | 목록 렌더링, 링크 이동, 다시 복사, 삭제, 실시간 갱신 |
 | `tests/regression.test.cjs` | 콘텐츠·백그라운드·설정 회귀 테스트 |
 | `tests/history.test.cjs` | 히스토리 UI, 복사 형식, 목록 갱신·스크롤 테스트 |
 | `build.ps1` | 배포용 ZIP 생성 |
 | `release/` | 버전별 배포 ZIP 보관 |
 | `.github/workflows/release.yml` | `v*` 태그 푸시 시 테스트·패키징·GitHub Release 생성 |
-| `icons/` | 16·48·128px 아이콘 |
+| `src/icons/` | 16·48·128px 아이콘 |
 
 ## 주요 동작
 
 ### 페이지에서 복사
 
-1. `content.js`가 각 프레임의 캡처 단계에서 `keydown`을 감지합니다.
+1. `src/content.js`가 각 프레임의 캡처 단계에서 `keydown`을 감지합니다.
 2. 저장된 활성화 상태, 키 코드, modifier 조합과 비교합니다. 반복 입력은 무시합니다.
 3. 활성 입력창·텍스트 영역의 선택을 우선 읽고, 그 외에는 `window.getSelection()`을 사용합니다. 입력창 내부 선택이 비었다고 이전 페이지 선택을 사용하지 않습니다.
 4. 텍스트가 없으면 `GET_TAB_DETAILS`로 최상위 탭 제목·주소를 조회합니다. 조회가 실패하면 문서 제목·주소로 대체하며, 제목도 없으면 URL을 링크 이름으로 사용합니다.
@@ -53,7 +53,7 @@ HTML 텍스트와 URL 속성은 이스케이프합니다. 일반 텍스트 형�
 
 ### 우클릭에서 복사
 
-서비스 워커는 메뉴 이벤트가 발생한 프레임에 `PING`을 보냅니다. 응답이 없으면 그 프레임에만 `content.js`를 주입하고 `COPY_LINK`를 전달합니다. 메뉴 이벤트의 선택 텍스트와 페이지 주소를 전달해, 다른 프레임의 오래된 선택 영역을 사용하지 않도록 합니다.
+서비스 워커는 메뉴 이벤트가 발생한 프레임에 `PING`을 보냅니다. 응답이 없으면 그 프레임에만 `src/content.js`를 주입하고 `COPY_LINK`를 전달합니다. 메뉴 이벤트의 선택 텍스트와 페이지 주소를 전달해, 다른 프레임의 오래된 선택 영역을 사용하지 않도록 합니다.
 
 탭 주소가 누락되면 `info.pageUrl`로 제한 여부를 판정합니다. 주소를 알 수 없는 경우와 브라우저 제한 페이지는 다른 오류로 처리합니다. 설치·업데이트 시에도 접근 가능한 기존 탭에 스크립트를 주입합니다.
 
@@ -125,13 +125,13 @@ HTML 텍스트와 URL 속성은 이스케이프합니다. 일반 텍스트 형�
 
 ```powershell
 node --test tests/regression.test.cjs tests/history.test.cjs
-node --check background.js
-node --check content.js
-node --check sidepanel.js
-node --check history.js
+node --check src/background.js
+node --check src/content.js
+node --check src/sidepanel.js
+node --check src/history.js
 ```
 
-현재 회귀 테스트는 32개입니다. 테스트는 Chrome API·문서·클립보드를 모의한 단위·흐름 검증이며 실제 브라우저에서의 모든 포커스·권한·편집기 동작을 보장하지 않습니다.
+현재 회귀 테스트는 36개입니다. 테스트는 Chrome API·문서·클립보드를 모의한 단위·흐름 검증이며 실제 브라우저에서의 모든 포커스·권한·편집기 동작을 보장하지 않습니다.
 
 변경한 확장 프로그램을 새로고침하고 다음 항목을 실제 브라우저에서 확인합니다.
 
@@ -152,18 +152,18 @@ node --check history.js
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
 ```
 
-`manifest.json`의 버전으로 `release/makehyperlink-v<버전>.zip`을 생성합니다. `release/` 폴더가 없으면 자동으로 생성하고, 같은 이름의 ZIP이 있으면 교체합니다. 이전 버전의 ZIP은 그대로 보관합니다. ZIP 루트에는 manifest·background·content·sidepanel·history 파일과 `icons/`만 포함하며, 문서·테스트·Git 데이터는 포함하지 않습니다. GitHub Actions도 `release/`에 ZIP을 생성해 Release에 첨부합니다.
+`src/manifest.json`의 버전으로 `release/makehyperlink-v<버전>.zip`을 생성합니다. `release/` 폴더가 없으면 자동으로 생성하고, 같은 이름의 ZIP이 있으면 교체합니다. 이전 버전의 ZIP은 그대로 보관합니다. ZIP 루트에는 manifest·background·content·sidepanel·history 파일과 `icons/`만 포함하며, 문서·테스트·Git 데이터는 포함하지 않습니다. GitHub Actions도 `release/`에 ZIP을 생성해 Release에 첨부합니다.
 
 ### GitHub Release
 
-1. `manifest.json` 버전을 올리고 필요한 README·가이드·릴리스 설명을 수정합니다.
+1. `src/manifest.json` 버전을 올리고 필요한 README·가이드·릴리스 설명을 수정합니다.
 2. 테스트와 수동 확인을 수행하고 ZIP을 빌드·점검합니다.
 3. 변경을 커밋해 `main`에 푸시합니다. 커밋 작성자와 GitHub 인증이 설정돼 있어야 합니다.
 4. manifest 버전과 같은 `v<버전>` 태그를 만들어 푸시합니다.
 5. GitHub Actions의 **Release MakeHyperlink** 성공과 Release의 ZIP 첨부를 확인합니다.
 
 ```powershell
-$releaseVersion = (Get-Content manifest.json -Raw -Encoding UTF8 | ConvertFrom-Json).version
+$releaseVersion = (Get-Content src/manifest.json -Raw -Encoding UTF8 | ConvertFrom-Json).version
 git push origin main
 git tag -a "v$releaseVersion" -m "Release v$releaseVersion"
 git push origin "v$releaseVersion"
