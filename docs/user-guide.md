@@ -2,7 +2,7 @@
 
 [README로 돌아가기](../README.md) · [개발자 가이드](developer-guide.md)
 
-이 문서는 MakeHyperlink **2.0.1** 기준입니다.
+이 문서는 MakeHyperlink **2.0.2** 기준입니다.
 
 ## 설치
 

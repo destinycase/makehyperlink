@@ -2,7 +2,7 @@
 
 [README로 돌아가기](../README.md) · [유저 가이드](user-guide.md)
 
-현재 코드와 배포 버전 **2.0.1**을 기준으로 설명합니다.
+현재 코드와 배포 버전 **2.0.2**를 기준으로 설명합니다.
 
 ## 개발 환경
 
@@ -104,13 +104,16 @@ HTML 텍스트와 URL 속성은 이스케이프합니다. 일반 텍스트 형�
 
 | 권한 | 사용 목적 |
 | --- | --- |
-| `activeTab` | 사용자 동작에 따른 현재 탭 접근 |
 | `clipboardWrite` | HTML·일반 텍스트 클립보드 기록 |
 | `contextMenus` | 우클릭 메뉴 생성 |
 | `storage` | 설정·히스토리 로컬 저장 |
 | `sidePanel` | 브라우저 사이드 패널 |
 | `scripting` | 기존 탭·대상 프레임에 콘텐츠 스크립트 복구 |
 | `<all_urls>` 호스트 권한 | 접근 가능한 웹페이지에 콘텐츠 스크립트 실행 |
+
+`activeTab`은 요청하지 않습니다. 현재 구현은 `<all_urls>` 호스트 권한으로 허용된 페이지의 탭 제목·주소를 읽고, `scripting`과 호스트 권한으로 콘텐츠 스크립트를 주입합니다. `tabs.query()`로 탭 ID를 조회하거나 `tabs.sendMessage()`로 통신하는 데 별도의 `activeTab` 권한은 필요하지 않습니다. 사용자가 사이트 접근 권한을 제한한 경우에는 허용 범위 안에서만 동작합니다.
+
+권한을 변경할 때는 [Chrome Tabs API의 권한 설명](https://developer.chrome.com/docs/extensions/reference/api/tabs#permissions)과 [Scripting API의 권한 설명](https://developer.chrome.com/docs/extensions/reference/api/scripting#manifest)을 기준으로 실제 API 사용을 확인합니다.
 
 `<all_urls>`는 브라우저 내부 화면이나 다른 확장 프로그램 화면의 보호를 해제하지 않습니다. `whale-extension://…`에서도 스크립트를 실행할 수 없습니다. 해당 제한을 제거하는 보안 설정 변경을 해결책으로 사용하지 않습니다.
 
@@ -166,6 +169,6 @@ git tag -a "v$releaseVersion" -m "Release v$releaseVersion"
 git push origin "v$releaseVersion"
 ```
 
-이미 공개한 버전 태그를 새 커밋으로 옮기지 말고 다음 버전을 사용합니다. 현재 자동 배포는 `v*` 태그 푸시에 반응하며, `main` 푸시만으로 릴리스를 만들지 않습니다. **2.0.1은 전용 `release/v2.0.1` 브랜치의 일회성 작업으로 배포했으며**, 이 절차를 이후 버전의 일반 배포 방식으로 사용하지 않습니다.
+이미 공개한 버전 태그를 새 커밋으로 옮기지 말고 다음 버전을 사용합니다. 기본 자동 배포는 `v*` 태그 푸시에 반응하며, `main` 푸시만으로 릴리스를 만들지 않습니다. 로컬 Git 인증 대신 GitHub 앱으로 배포하는 경우에는 해당 버전 전용 `release/v<버전>` 브랜치의 일회성 작업으로 검증된 커밋의 태그·Release를 생성합니다. 이 작업은 `main`의 배포 트리거를 변경하지 않습니다.
 
 GitHub Release와 Chrome·Whale 웹 스토어 게시는 별개입니다. 스토어는 해당 개발자 대시보드에서 ZIP과 등록 정보를 제출하고 검토 결과를 확인해야 합니다. 이 저장소의 Actions는 스토어 제출까지 수행하지 않습니다.
