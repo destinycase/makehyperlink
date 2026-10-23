@@ -1,0 +1,38 @@
+name: Publish MakeHyperlink 2.0.1
+on:
+  push:
+    branches:
+      - release/v2.0.1
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: cdbeb116a8ed5d979a72d957dc9a5ee2efdf54ad
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Verify release
+        run: |
+          node --test tests/*.test.cjs
+          node -e "if (require('./manifest.json').version !== '2.0.1') process.exit(1)"
+          unzip -t makehyperlink-v2.0.1.zip
+      - name: Publish version 2.0.1
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v2.0.1
+          target_commitish: cdbeb116a8ed5d979a72d957dc9a5ee2efdf54ad
+          name: Release v2.0.1
+          files: makehyperlink-v2.0.1.zip
+          fail_on_unmatched_files: true
+          draft: false
+          prerelease: false
+          body: |
+            - 브라우저 사이드 패널 및 컴팩트한 히스토리 목록
+            - 최근 100개 로컬 저장, 다시 복사, 링크 이동 및 삭제
+            - 선택한 텍스트가 없으면 탭 제목으로 하이퍼링크 생성
+            - 복사 결과 배지를 1초간 표시
+            - 단축키 복구 및 제한 페이지 안내 개선
