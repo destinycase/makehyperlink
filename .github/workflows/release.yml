@@ -25,8 +25,9 @@ jobs:
 
       - name: Create Zip Package
         run: |
-          mkdir -p dist
-          zip -r dist/makehyperlink-${{ github.ref_name }}.zip \
+          mkdir -p release
+          rm -f release/makehyperlink-${{ github.ref_name }}.zip
+          zip -r release/makehyperlink-${{ github.ref_name }}.zip \
             manifest.json \
             background.js \
             content.js \
@@ -39,7 +40,7 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          files: dist/makehyperlink-${{ github.ref_name }}.zip
+          files: release/makehyperlink-${{ github.ref_name }}.zip
           name: Release ${{ github.ref_name }}
           body: |
             MakeHyperlink 확장 프로그램의 새로운 버전이 릴리스되었습니다.
