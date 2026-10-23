@@ -20,7 +20,13 @@ function updateHistory(transform) {
     const pending = historyUpdate.catch(() => {}).then(() => new Promise((resolve, reject) => {
         chrome.storage.local.get(["history"], (result) => {
             if (chrome.runtime.lastError) return reject(new Error(chrome.runtime.lastError.message));
-            const history = transform(Array.isArray(result.history) ? result.history : []);
+            let history;
+            try {
+                history = transform(Array.isArray(result.history) ? result.history : []);
+            } catch (error) {
+                reject(error);
+                return;
+            }
             chrome.storage.local.set({ history }, () => {
                 if (chrome.runtime.lastError) return reject(new Error(chrome.runtime.lastError.message));
                 resolve(history);
@@ -38,8 +44,8 @@ function saveHistory(item) {
         ...history.filter((old) => old && (old.text !== item.text || old.url !== item.url))].slice(0, HISTORY_LIMIT));
 }
 
-async function recordCopyResult(tabId, success, message, item) {
-    if (success) {
+async function recordCopyResult(tabId, success, message, item, storeHistory = true) {
+    if (success && storeHistory) {
         try {
             await saveHistory(item);
         } catch (error) {
@@ -82,6 +88,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return false;
     }
     const fromPanel = sender.url === chrome.runtime.getURL("sidepanel.html");
+    if (request.action === "UPDATE_HISTORY_TEXT" && fromPanel) {
+        if (typeof request.id !== "string" || typeof request.text !== "string" || !request.text.trim()) {
+            sendResponse({ status: "ERROR", message: "표시할 텍스트를 입력해 주세요." });
+            return false;
+        }
+        void updateHistory((history) => {
+            if (!history.some((item) => item.id === request.id)) throw new Error("삭제된 항목입니다.");
+            return history.map((item) => item.id === request.id ? { ...item, text: request.text.trim() } : item);
+        }).then(() => sendResponse({ status: "SUCCESS" }))
+            .catch((error) => sendResponse({ status: "ERROR", message: error.message }));
+        return true;
+    }
     if (request.action === "DELETE_HISTORY" && fromPanel) {
         void updateHistory((history) => request.id ? history.filter((item) => item.id !== request.id) : [])
             .then(() => sendResponse({ status: "SUCCESS" }))
@@ -92,7 +110,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         const query = Number.isInteger(request.windowId) && request.windowId >= 0
             ? { active: true, windowId: request.windowId } : { active: true, currentWindow: true };
         void chrome.tabs.query(query)
-            .then(([tab]) => recordCopyResult(tab?.id, request.success, request.message, request.item))
+            .then(([tab]) => recordCopyResult(tab?.id, request.success, request.message, request.item, false))
             .then(() => sendResponse({ status: "RECEIVED" }))
             .catch((error) => sendResponse({ status: "ERROR", message: error.message }));
         return true;

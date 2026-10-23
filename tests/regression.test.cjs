@@ -76,7 +76,7 @@ test('concurrent successful copies persist, deduplicate and cap history at 100',
 });
 
 test('side panel can re-copy and delete history through the shared storage queue',async()=>{
- const b=background({tabs:[{id:6}]});const sender={url:'chrome-extension://test/sidepanel.html'};
+ const b=background({tabs:[{id:6}],history:[{id:'existing',text:'popup',url:'https://example.com/',copiedAt:123}]});const sender={url:'chrome-extension://test/sidepanel.html'};
  await backgroundRequest(b,{action:'COPY_RESULT',success:true,item:{text:'popup',url:'https://example.com/'}},sender);
  assert.equal(b.badges[6],'OK');const id=b.data.history[0].id;
  await backgroundRequest(b,{action:'DELETE_HISTORY',id},sender);assert.equal(b.data.history.length,0);
@@ -285,4 +285,28 @@ test('help opens modally, prevents repeated opens and returns focus after close'
  vm.runInNewContext(fs.readFileSync(srcPath('help.js'),'utf8'),{document:{getElementById:id=>({'help-dialog':dialog,'help-open':open,'help-close':close}[id]),addEventListener:(_,fn)=>fn()}});
  handlers.open();handlers.open();assert.equal(opens,1);assert.equal(dialog.open,true);
  handlers.close();assert.equal(dialog.open,false);assert.equal(focused,true);
+});
+
+test('label edits persist only text, preserve ordering and reject empty or deleted items',async()=>{
+ const item={id:'edit-me',text:'Old',url:'https://example.com/',copiedAt:123};
+ const b=background({history:[item]});const sender={url:'chrome-extension://test/sidepanel.html'};
+ const send=request=>new Promise(resolve=>b.listeners.message(request,sender,resolve));
+ assert.equal((await send({action:'UPDATE_HISTORY_TEXT',id:item.id,text:' New '})).status,'SUCCESS');
+ assert.equal(b.data.history[0].text,'New');assert.equal(b.data.history[0].url,item.url);assert.equal(b.data.history[0].copiedAt,123);assert.equal(b.data.history[0].id,item.id);
+ assert.equal((await send({action:'UPDATE_HISTORY_TEXT',id:item.id,text:' '})).status,'ERROR');
+ assert.equal((await send({action:'UPDATE_HISTORY_TEXT',id:'deleted',text:'Text'})).status,'ERROR');
+ assert.equal(b.data.history.length,1);
+ assert.equal(b.listeners.message({action:'UPDATE_HISTORY_TEXT',id:item.id,text:'bad'},{url:'https://example.com/'},()=>assert.fail()),false);
+});
+
+test('editing then re-copying a tile preserves IDs, timestamps and order without restoring deleted tiles',async()=>{
+ const initial=[{id:'a',text:'First',url:'https://a.example/',copiedAt:200},{id:'b',text:'Second',url:'https://b.example/',copiedAt:100}];
+ const b=background({tabs:[{id:6}],history:initial});const sender={url:'chrome-extension://test/sidepanel.html'};
+ await backgroundRequest(b,{action:'UPDATE_HISTORY_TEXT',id:'b',text:'Edited'},sender);
+ const snapshot=JSON.stringify(b.data.history);
+ await backgroundRequest(b,{action:'COPY_RESULT',success:true,item:{...b.data.history[1]}},sender);
+ assert.equal(JSON.stringify(b.data.history),snapshot);assert.equal(b.badges[6],'OK');
+ await backgroundRequest(b,{action:'DELETE_HISTORY',id:'b'},sender);
+ await backgroundRequest(b,{action:'COPY_RESULT',success:true,item:{...initial[1],text:'Edited'}},sender);
+ assert.equal(b.data.history.length,1);assert.equal(b.data.history[0].id,'a');
 });

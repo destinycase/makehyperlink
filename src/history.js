@@ -4,6 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const count = document.getElementById("history-count");
     const status = document.getElementById("history-status");
     const clear = document.getElementById("clear-history");
+    const edits = new Map();
 
     function send(request) {
         return new Promise((resolve, reject) => {
@@ -84,6 +85,9 @@ document.addEventListener("DOMContentLoaded", () => {
         empty.hidden = history.length > 0;
         list.hidden = history.length === 0;
         clear.disabled = history.length === 0;
+        for (const id of edits.keys()) {
+            if (!history.some((item) => item.id === id)) edits.delete(id);
+        }
         for (const item of history) {
             const row = document.createElement("li");
             row.className = "history-item";
@@ -123,6 +127,83 @@ document.addEventListener("DOMContentLoaded", () => {
             remove.addEventListener("click", () => { void removeItem(item.id, remove); });
             meta.append(time, copy, remove);
             row.append(text, url, meta);
+            const edit = document.createElement("button");
+            edit.type = "button";
+            edit.className = "icon-button icon-edit history-edit";
+            edit.title = edit.ariaLabel = "표시 텍스트 수정";
+            const editor = document.createElement("div");
+            editor.className = "history-editor";
+            const input = document.createElement("input");
+            input.type = "text";
+            input.className = "history-edit-input";
+            input.ariaLabel = "표시 텍스트";
+            const confirm = document.createElement("button");
+            confirm.type = "button";
+            confirm.className = "icon-button icon-confirm";
+            confirm.title = confirm.ariaLabel = "확인";
+            const cancel = document.createElement("button");
+            cancel.type = "button";
+            cancel.className = "icon-button icon-delete icon-cancel";
+            cancel.title = cancel.ariaLabel = "취소";
+            editor.append(input, confirm, cancel);
+            const state = edits.get(item.id);
+            function showEditor(visible) {
+                editor.hidden = !visible;
+                text.hidden = edit.hidden = meta.hidden = visible;
+            }
+            showEditor(!!state);
+            input.value = state?.draft ?? item.text;
+            input.disabled = confirm.disabled = cancel.disabled = !!state?.saving;
+            edit.addEventListener("click", () => {
+                edits.set(item.id, { draft: item.text, saving: false });
+                input.value = item.text;
+                showEditor(true);
+                input.focus();
+                input.select();
+            });
+            input.addEventListener("input", () => {
+                input.setCustomValidity("");
+                const current = edits.get(item.id);
+                if (current) current.draft = input.value;
+            });
+            function cancelEdit() {
+                if (edits.get(item.id)?.saving) return;
+                edits.delete(item.id);
+                showEditor(false);
+                edit.focus();
+            }
+            async function saveEdit() {
+                const current = edits.get(item.id);
+                if (!current || current.saving) return;
+                if (!input.value.trim()) {
+                    input.setCustomValidity("표시할 텍스트를 입력해 주세요.");
+                    input.reportValidity();
+                    return;
+                }
+                input.setCustomValidity("");
+                current.draft = input.value;
+                current.saving = true;
+                input.disabled = confirm.disabled = cancel.disabled = true;
+                try {
+                    await send({ action: "UPDATE_HISTORY_TEXT", id: item.id, text: current.draft });
+                    edits.delete(item.id);
+                    status.textContent = "";
+                    loadHistory();
+                } catch {
+                    current.saving = false;
+                    input.disabled = confirm.disabled = cancel.disabled = false;
+                    status.textContent = "텍스트를 저장하지 못했습니다. 다시 시도해 주세요.";
+                    loadHistory();
+                }
+            }
+            confirm.addEventListener("click", () => { void saveEdit(); });
+            cancel.addEventListener("click", cancelEdit);
+            input.addEventListener("keydown", (event) => {
+                if (event.isComposing) return;
+                if (event.key === "Enter") { event.preventDefault(); void saveEdit(); }
+                if (event.key === "Escape") { event.preventDefault(); cancelEdit(); }
+            });
+            row.append(edit, editor);
             list.appendChild(row);
         }
         list.scrollTop = scrollTop;

@@ -39,14 +39,14 @@ main { display: flex; flex-direction: column; flex: 1; min-height: 0; }
 .history-list::-webkit-scrollbar-track { background: transparent; }
 .history-list::-webkit-scrollbar-thumb { background: #ffffff30; border-radius: 5px; }
 .history-list::-webkit-scrollbar-thumb:hover { background: #ffffff50; }
-.history-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: 20px 18px; column-gap: 8px; padding: 10px; margin-bottom: 8px; border: 1px solid #ffffff20; border-radius: 8px; background: #1b2432; }
+.history-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: 20px 16px; row-gap: 4px; column-gap: 8px; padding: 10px; margin-bottom: 8px; border: 1px solid #ffffff20; border-radius: 8px; background: #1b2432; align-items: center; }
 .history-item:last-child { margin-bottom: 0; }
 .history-item:hover { background: #223047; border-color: #6aa9ff55; }
 .history-item:focus-within { border-color: var(--primary); }
 .history-text { grid-column: 1; grid-row: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; line-height: 17px; }
 .history-url { grid-column: 1; grid-row: 2; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--primary); text-decoration: none; font-size: 10px; line-height: 15px; }
 .history-url:hover { text-decoration: underline; }
-.history-meta { grid-column: 2; grid-row: 1 / 3; display: grid; grid-template-columns: auto auto; grid-template-rows: 24px 14px; align-items: center; gap: 0 4px; }
+.history-meta { grid-column: 2; grid-row: 1 / 3; display: grid; grid-template-columns: auto auto; grid-template-rows: 20px 16px; align-items: center; gap: 4px; }
 .history-time { grid-column: 1 / 3; grid-row: 2; text-align: right; color: var(--muted); font-size: 9px; line-height: 14px; white-space: nowrap; }
 .btn-small { border: 1px solid var(--border); border-radius: 4px; background: #ffffff05; color: #aebfd6; padding: 1px 5px; font-size: 10px; line-height: 16px; white-space: nowrap; }
 .btn-small:hover { color: var(--text); border-color: #ffffff35; background: #ffffff0c; }
@@ -70,7 +70,8 @@ main { display: flex; flex-direction: column; flex: 1; min-height: 0; }
 .icon-delete { --button-icon: url("icons/ui/delete.svg"); }
 .icon-edit { --button-icon: url("icons/ui/edit.svg"); }
 .icon-cancel { --button-icon: url("icons/ui/cancel.svg"); }
-.history-meta .icon-button { width: 24px; height: 24px; }
+.history-meta .icon-button { width: 20px; height: 20px; justify-self: end; }
+.history-meta .icon-button::before { width: 12px; height: 12px; }
 
 /* Keep history first and shortcut settings pinned below its scrolling list. */
 .history-section { margin-top: 0; border-top: 0; }
@@ -119,6 +120,19 @@ header { padding-bottom: 10px; border-bottom: 1px solid var(--border); }
 .help-copy-list li { color: var(--muted); }
 .help-copy-list li + li { margin-top: 12px; }
 .help-copy-list h4 { color: var(--text); font-size: 12px; font-weight: 600; margin-bottom: 4px; }
+.history-item { grid-template-columns: 20px minmax(0, 1fr) auto; column-gap: 6px; }
+.history-text { grid-column: 2; }
+.history-url { grid-column: 1 / 3; }
+.history-meta { grid-column: 3; }
+.history-edit { grid-column: 1; grid-row: 1; width: 20px; height: 20px; }
+.history-edit::before { width: 12px; height: 12px; }
+.history-editor { grid-column: 1 / 4; grid-row: 1; display: flex; align-items: center; gap: 4px; }
+.history-editor .icon-button { width: 24px; height: 24px; }
+.history-edit-input { width: 0; min-width: 0; flex: 1; height: 26px; padding: 3px 6px; border: 1px solid var(--primary); border-radius: 4px; background: #101722; color: var(--text); outline-offset: 1px; }
+.history-item:has(.history-editor:not([hidden])) { grid-template-rows: 28px 16px; }
+.history-item:has(.history-editor:not([hidden])) .history-url { grid-column: 1 / 4; }
+.icon-confirm { --button-icon: url("icons/ui/confirm.svg"); }
+.icon-button.icon-confirm { color: #6cda94; border-color: #3aa76566; background: #29964f1a; }
 .help-content p { color: #b5c4da; font-size: 12px; line-height: 1.7; }
 .help-content p + p { margin-top: 6px; }
 kbd { padding: 1px 4px; border: 1px solid var(--border); border-radius: 3px; color: var(--text); font: inherit; }

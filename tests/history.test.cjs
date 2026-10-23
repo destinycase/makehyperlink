@@ -12,11 +12,15 @@ function panel({fallback=false,denied=false}={}) {
   appendChild(item){this.children.push(item);}
   replaceChildren(){this.children=[];}
   addEventListener(name,fn){this.listeners[name]=fn;}
+  focus(){}
+  select(){}
+  setCustomValidity(message){this.validationMessage=message;}
+  reportValidity(){}
  }
  const elements=Object.fromEntries(['history-list','history-empty','history-count','history-status','clear-history'].map(id=>[id,new Element()]));
  const history=[{id:'1',text:'<img src=x onerror=alert(1)> & 한글',url:'https://example.com/?x="&y=2',copiedAt:Date.now()}];
  const copied={},messages=[],handlers={};let onStorageChanged;
- const chrome={windows:{getCurrent:async()=>({id:9})},storage:{local:{get:(_,cb)=>cb({history})},onChanged:{addListener:fn=>onStorageChanged=fn}},runtime:{sendMessage:(request,cb)=>{messages.push(request);if(request.action==='DELETE_HISTORY')history.splice(0);cb({status:'SUCCESS'});}}};
+ const chrome={windows:{getCurrent:async()=>({id:9})},storage:{local:{get:(_,cb)=>cb({history})},onChanged:{addListener:fn=>onStorageChanged=fn}},runtime:{sendMessage:(request,cb)=>{messages.push(request);if(request.action==='DELETE_HISTORY')history.splice(0);if(request.action==='UPDATE_HISTORY_TEXT')history.find(item=>item.id===request.id).text=request.text.trim();cb({status:'SUCCESS'});}}};
  const document={getElementById:id=>elements[id],createElement:tag=>new Element(tag),addEventListener:(_,fn)=>fn(),execCommand:()=>{if(denied)return false;handlers.copy({clipboardData:{setData:(type,value)=>copied[type]=value},preventDefault(){},stopImmediatePropagation(){}});return true;}};
  vm.runInNewContext(fs.readFileSync(srcPath('history.js'),'utf8'),{document,chrome,window:{addEventListener:(name,fn)=>handlers[name]=fn,removeEventListener:name=>delete handlers[name]},Blob,ClipboardItem:class{constructor(data){this.data=data;}},navigator:{clipboard:{write:async items=>{if(fallback||denied)throw Error('denied');for(const [type,blob]of Object.entries(items[0].data))copied[type]=await blob.text();}}}});
  return {elements,copied,messages,history,handlers,change:onStorageChanged};
@@ -73,4 +77,24 @@ test('history refresh keeps the current scroll position',()=>{
  assert.equal(p.elements['history-list'].scrollTop,180);
  const time=p.elements['history-list'].children[0].children[2].children[0];
  assert.ok(time.title);assert.ok(time.textContent.length<time.title.length);
+});
+
+test('tile edit confirms a new label and subsequent copy uses it with the original URL',async()=>{
+ const p=panel();let row=p.elements['history-list'].children[0];
+ const url=p.history[0].url;row.children[3].listeners.click();
+ const editor=row.children[4],input=editor.children[0];assert.equal(editor.hidden,false);
+ input.value='New <label>';input.listeners.input();editor.children[1].listeners.click();
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(p.history[0].text,'New <label>');assert.equal(p.history[0].url,url);
+ row=p.elements['history-list'].children[0];row.children[2].children[1].listeners.click();
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(p.copied['text/plain'],`[New <label>](${url})`);assert.match(p.copied['text/html'],/New &lt;label&gt;/);
+});
+test('cancel and blank labels do not change stored text; drafts survive live list updates',()=>{
+ const p=panel();const original=p.history[0].text;let row=p.elements['history-list'].children[0];
+ row.children[3].listeners.click();let editor=row.children[4],input=editor.children[0];
+ input.value='  ';editor.children[1].listeners.click();assert.ok(input.validationMessage);assert.equal(p.messages.length,0);
+ input.value='Draft';input.listeners.input();p.change({history:{}},'local');
+ row=p.elements['history-list'].children[0];editor=row.children[4];assert.equal(editor.hidden,false);assert.equal(editor.children[0].value,'Draft');
+ editor.children[2].listeners.click();assert.equal(editor.hidden,true);assert.equal(p.history[0].text,original);assert.equal(p.messages.length,0);
 });

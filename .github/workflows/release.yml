@@ -45,13 +45,13 @@ jobs:
           files: release/makehyperlink-${{ github.ref_name }}.zip
           name: Release ${{ github.ref_name }}
           body: |
-            MakeHyperlink v2.1.3
+            MakeHyperlink v2.1.4
 
-            - Add in-panel help dialog with copy, list, shortcut and status guidance.
-            - Organize copying instructions into three methods; omit paste instructions.
-            - Support close button, Escape and focus restoration.
-            - Include help.js in local and automated release packages.
-            - Update user and developer documentation.
+            - Edit tile display text with confirm/cancel and Enter/Escape support.
+            - Preserve link URLs, timestamps and list order when editing or re-copying.
+            - Keep drafts during live list updates and reject empty labels.
+            - Align two-line tiles and use consistent 20px action buttons.
+            - Update usage popup, user guide and developer documentation.
           draft: false
           prerelease: false
         env:
