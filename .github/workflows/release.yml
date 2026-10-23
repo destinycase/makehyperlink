@@ -36,6 +36,8 @@ jobs:
             sidepanel.js \
             history.js \
             help.js \
+            settings.js \
+            i18n.js \
             sidepanel.css \
             icons/
 
@@ -45,13 +47,13 @@ jobs:
           files: release/makehyperlink-${{ github.ref_name }}.zip
           name: Release ${{ github.ref_name }}
           body: |
-            MakeHyperlink v2.1.4
+            MakeHyperlink v2.1.5
 
-            - Edit tile display text with confirm/cancel and Enter/Escape support.
-            - Preserve link URLs, timestamps and list order when editing or re-copying.
-            - Keep drafts during live list updates and reject empty labels.
-            - Align two-line tiles and use consistent 20px action buttons.
-            - Update usage popup, user guide and developer documentation.
+            - Add a settings dialog next to Help.
+            - Choose English (default) or Korean; persist the selected language locally.
+            - Localize panel controls, help, settings and context menus.
+            - Move shortcut controls into Settings and stop recording when it closes.
+            - Exclude local store promotional assets from Git and release packages.
           draft: false
           prerelease: false
         env:

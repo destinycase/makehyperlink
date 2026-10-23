@@ -2,7 +2,7 @@
 
 선택한 텍스트 또는 탭 제목을 현재 페이지 주소와 연결된 하이퍼링크로 복사하는 브라우저 확장 프로그램입니다. 사이드 패널에서 복사한 링크를 다시 사용하고 관리할 수 있습니다.
 
-현재 버전은 **2.1.4**이며, Chrome 114 이상의 Manifest V3·Side Panel API를 사용합니다. 다른 Chromium 계열 브라우저는 해당 API 지원 여부를 확인해야 합니다.
+현재 버전은 **2.1.5**이며, Chrome 114 이상의 Manifest V3·Side Panel API를 사용합니다. 다른 Chromium 계열 브라우저는 해당 API 지원 여부를 확인해야 합니다.
 
 ## 주요 기능
 
@@ -15,7 +15,7 @@
 - **간단한 결과 표시**: 초록색 `OK` 또는 빨간색 `ERR` 배지를 1초간 표시합니다.
 - **컴팩트한 목록**: 제목과 주소를 두 줄로 표시하고, 목록만 스크롤합니다. 긴 내용은 마우스를 올려 확인할 수 있습니다.
 - **표시 텍스트 편집**: 타일 왼쪽 연필 아이콘으로 이름을 수정하고 확인 또는 Enter로 저장합니다. 취소 또는 Esc로 되돌릴 수 있으며, 주소는 유지합니다. 저장 후 복사 버튼을 누르면 변경한 이름으로 복사됩니다.
-- **하단 설정**: `목록 0 / 100`과 전체 삭제 버튼, 단축키 사용 스위치와 변경 아이콘을 제공합니다. 단축키 Off 시 실행과 변경을 차단합니다.
+- **설정 창**: 상단 사용법 버튼 왼쪽의 설정 아이콘에서 언어(기본 영어·한국어)와 단축키 사용 여부·키 조합을 설정합니다. 단축키 Off 시 실행과 변경을 차단합니다. 목록 수량과 전체 삭제 버튼은 목록 아래에 표시합니다.
 
 알림을 위해 웹페이지에 토스트나 스타일을 삽입하지 않으며, 복사 과정에서 입력창 값과 선택 영역을 옮기지 않습니다.
 
@@ -45,7 +45,7 @@
 ```powershell
 git clone https://github.com/destinycase/makehyperlink.git
 cd makehyperlink
-node --test tests/regression.test.cjs tests/history.test.cjs
+node --test tests/*.test.cjs
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
 ```
 

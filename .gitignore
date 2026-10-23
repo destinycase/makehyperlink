@@ -21,3 +21,6 @@ npm-debug.log*
 
 #release
 release/
+
+# Local store promotional assets
+/store-assets/

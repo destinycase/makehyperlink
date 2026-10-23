@@ -2,7 +2,7 @@
 
 [README로 돌아가기](../README.md) · [유저 가이드](user-guide.md)
 
-현재 코드와 배포 버전 **2.1.4**를 기준으로 설명합니다.
+현재 코드와 배포 버전 **2.1.5**를 기준으로 설명합니다.
 
 ## 개발 환경
 
@@ -31,6 +31,7 @@ cd makehyperlink
 | `src/sidepanel.js` | 단축키 녹화·저장, 활성화 스위치, 설정 변경 반영 |
 | `src/history.js` | 목록 렌더링, 링크 이동, 다시 복사, 삭제, 실시간 갱신 |
 | `src/help.js` | 사용법 모달 열기·닫기와 닫힌 뒤 포커스 복원 |
+| `src/settings.js` / `src/i18n.js` | 설정 모달, 영어·한국어 선택과 저장, 패널 번역 |
 | `tests/regression.test.cjs` | 콘텐츠·백그라운드·설정 회귀 테스트 |
 | `tests/history.test.cjs` | 히스토리 UI, 복사 형식, 목록 갱신·스크롤 테스트 |
 | `build.ps1` | 배포용 ZIP 생성 |
@@ -93,6 +94,7 @@ HTML 텍스트와 URL 속성은 이스케이프합니다. 일반 텍스트 형�
 | 키 | 구조·기본값 |
 | --- | --- |
 | `enabled` | boolean, 미설정 시 `true` |
+| `language` | `en` 또는 `ko`, 미설정·지원하지 않는 값은 `en` |
 | `shortcut` | `code`, `display`, `ctrlKey`, `altKey`, `shiftKey`, `metaKey`; 기본 `Ctrl + Alt + C` |
 | `history` | 최신순 항목 배열, 미설정 시 빈 배열 |
 
@@ -133,14 +135,14 @@ HTML 텍스트와 URL 속성은 이스케이프합니다. 일반 텍스트 형�
 저장소 루트에서 실행합니다.
 
 ```powershell
-node --test tests/regression.test.cjs tests/history.test.cjs
+node --test tests/*.test.cjs
 node --check src/background.js
 node --check src/content.js
 node --check src/sidepanel.js
 node --check src/history.js
 ```
 
-현재 회귀 테스트는 41개입니다. 테스트는 Chrome API·문서·클립보드를 모의한 단위·흐름 검증이며 실제 브라우저에서의 모든 포커스·권한·편집기 동작을 보장하지 않습니다.
+현재 회귀 테스트는 44개입니다. 테스트는 Chrome API·문서·클립보드를 모의한 단위·흐름 검증이며 실제 브라우저에서의 모든 포커스·권한·편집기 동작을 보장하지 않습니다.
 
 변경한 확장 프로그램을 새로고침하고 다음 항목을 실제 브라우저에서 확인합니다.
 

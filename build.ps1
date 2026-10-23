@@ -20,6 +20,8 @@ try {
         "sidepanel.js",
         "history.js",
         "help.js",
+        "settings.js",
+        "i18n.js",
         "sidepanel.css",
         "icons"
     )

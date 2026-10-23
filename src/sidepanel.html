@@ -13,7 +13,10 @@
                 <img class="logo-icon" src="icons/icon48.png" width="20" height="20" alt="">
                 <h1>MakeHyperlink</h1>
             </div>
-            <button id="help-open" class="help-button" type="button" title="사용법" aria-label="사용법 열기" aria-haspopup="dialog">?</button>
+            <div class="header-actions">
+                <button id="settings-open" class="icon-button icon-settings" type="button" title="설정" aria-label="설정 열기" aria-haspopup="dialog"></button>
+                <button id="help-open" class="help-button" type="button" title="사용법" aria-label="사용법 열기" aria-haspopup="dialog">?</button>
+            </div>
         </header>
 
         <main>
@@ -25,6 +28,21 @@
                     <h2 id="history-heading" title="이 브라우저에 최근 100개까지 저장">목록 <span id="history-count">0 / 100</span></h2>
                     <button id="clear-history" class="btn-small clear-history-button" type="button" disabled>전체 삭제</button>
                 </div>
+            </section>
+
+        </main>
+
+    </div>
+    <dialog id="settings-dialog" class="help-dialog settings-dialog" aria-labelledby="settings-title">
+        <div class="help-heading">
+            <h2 id="settings-title">설정</h2>
+            <button id="settings-close" class="icon-button icon-cancel" type="button" title="닫기" aria-label="설정 닫기" autofocus></button>
+        </div>
+        <div class="help-content">
+            <section class="language-section">
+                <label for="language-select">언어</label>
+                <select id="language-select"><option value="en">English</option><option value="ko">한국어</option></select>
+                <p id="settings-status" class="status-msg" role="status" aria-live="polite"></p>
             </section>
             <section class="shortcut-section">
                 
@@ -43,9 +61,8 @@
                 </div>
                 <p id="status-msg" class="status-msg" role="status" aria-live="polite"></p>
             </section>
-        </main>
-
-    </div>
+        </div>
+    </dialog>
     <dialog id="help-dialog" class="help-dialog" aria-labelledby="help-title">
         <div class="help-heading">
             <h2 id="help-title">MakeHyperlink 사용법</h2>
@@ -61,10 +78,12 @@
                 </ul>
             </section>
             <section><h3>목록 관리</h3><p>최근 100개를 이 브라우저에 저장합니다. 왼쪽 연필 아이콘으로 표시 이름을 수정하고 확인 또는 Enter로 저장하세요. 취소 또는 Esc로 취소합니다. 이름을 바꾼 뒤 파란 복사 아이콘을 누르면 변경한 이름으로 복사됩니다. 주소와 기존 시간·목록 순서는 유지됩니다.</p><p>빨간 휴지통 아이콘으로 개별 항목을 삭제하세요. ‘전체 삭제’는 모든 항목을 지우며 되돌릴 수 없습니다.</p></section>
-            <section><h3>단축키 설정</h3><p>하단의 초록 연필 아이콘을 누르고 Ctrl, Alt, Meta 중 하나 이상을 포함한 키 조합을 입력하세요. Esc로 취소할 수 있습니다.</p><p>‘단축키 사용’을 끄면 단축키 실행과 변경이 중단됩니다. 우클릭 메뉴와 목록의 복사 버튼은 계속 사용할 수 있습니다.</p></section>
+            <section><h3>단축키 설정</h3><p>설정의 초록 연필 아이콘을 누르고 Ctrl, Alt, Meta 중 하나 이상을 포함한 키 조합을 입력하세요. Esc로 취소할 수 있습니다.</p><p>‘단축키 사용’을 끄면 단축키 실행과 변경이 중단됩니다. 우클릭 메뉴와 목록의 복사 버튼은 계속 사용할 수 있습니다.</p></section>
             <section><h3>동작 확인</h3><p>확장 아이콘에 초록 OK는 복사 성공, 빨강 ERR는 실패를 뜻합니다. 브라우저 내부 화면과 웹 스토어 등에서는 페이지 복사를 사용할 수 없습니다.</p></section>
         </div>
     </dialog>
+    <script src="i18n.js"></script>
+    <script src="settings.js"></script>
     <script src="sidepanel.js"></script>
     <script src="history.js"></script>
     <script src="help.js"></script>

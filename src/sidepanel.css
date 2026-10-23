@@ -133,6 +133,14 @@ header { padding-bottom: 10px; border-bottom: 1px solid var(--border); }
 .history-item:has(.history-editor:not([hidden])) .history-url { grid-column: 1 / 4; }
 .icon-confirm { --button-icon: url("icons/ui/confirm.svg"); }
 .icon-button.icon-confirm { color: #6cda94; border-color: #3aa76566; background: #29964f1a; }
+.header-actions { display: flex; align-items: center; gap: 6px; }
+.icon-settings { --button-icon: url("icons/ui/settings.svg"); }
+.header-actions .icon-button { width: 24px; height: 24px; color: #72b7ff; border-color: #3694ed66; background: #1678d41a; }
+.settings-dialog .language-section { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.language-section label { color: var(--text); font-size: 12px; }
+#language-select { padding: 6px 28px 6px 10px; border: 1px solid #6aa9ff55; border-radius: 5px; background: #1b2432; color: var(--text); font: inherit; }
+#settings-status { flex-basis: 100%; }
+.settings-dialog .shortcut-section { margin-top: 16px; padding-top: 14px; }
 .help-content p { color: #b5c4da; font-size: 12px; line-height: 1.7; }
 .help-content p + p { margin-top: 6px; }
 kbd { padding: 1px 4px; border: 1px solid var(--border); border-radius: 3px; color: var(--text); font: inherit; }

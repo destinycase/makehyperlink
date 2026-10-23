@@ -127,7 +127,7 @@ function hasOwn(object, property) {
 
 function getLocalSettings() {
     return new Promise((resolve, reject) => {
-        chrome.storage.local.get(["shortcut", "enabled"], (result) => {
+        chrome.storage.local.get(["shortcut", "enabled", "language"], (result) => {
             const error = chrome.runtime.lastError;
             if (error) {
                 reject(new Error(error.message));
@@ -172,9 +172,10 @@ function setupContextMenu() {
             const settings = await getLocalSettings();
             const enabled = hasOwn(settings, "enabled") ? settings.enabled : true;
             const shortcutDisplay = settings.shortcut?.display || DEFAULT_SHORTCUT_DISPLAY;
+            const baseTitle = settings.language === "ko" ? "\uD558\uC774\uD37C\uB9C1\uD06C \uB9CC\uB4E4\uAE30" : "Copy as hyperlink";
             const title = enabled
-                ? `하이퍼링크 만들기 (${shortcutDisplay})`
-                : "하이퍼링크 만들기";
+                ? `${baseTitle} (${shortcutDisplay})`
+                : baseTitle;
 
             await removeAllContextMenus();
             await createContextMenu({
@@ -184,7 +185,7 @@ function setupContextMenu() {
             });
             await createContextMenu({
                 id: LINK_MENU_ID,
-                title: "\uC774 \uB9C1\uD06C\uB97C \uD558\uC774\uD37C\uB9C1\uD06C\uB85C \uBCF5\uC0AC",
+                title: settings.language === "ko" ? "\uC774 \uB9C1\uD06C\uB97C \uD558\uC774\uD37C\uB9C1\uD06C\uB85C \uBCF5\uC0AC" : "Copy this link as hyperlink",
                 contexts: ["link"]
             });
         })
@@ -304,7 +305,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 });
 
 chrome.storage.onChanged.addListener((changes, namespace) => {
-    if (namespace === "local" && ("shortcut" in changes || "enabled" in changes)) {
+    if (namespace === "local" && ("shortcut" in changes || "enabled" in changes || "language" in changes)) {
         void setupContextMenu();
     }
 });

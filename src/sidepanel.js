@@ -3,6 +3,7 @@
  */
 
 document.addEventListener("DOMContentLoaded", () => {
+    const t = (text) => globalThis.MH?.t(text) ?? text;
     const DEFAULT_SHORTCUT_DISPLAY = "Ctrl + Alt + C";
     const recordButton = document.getElementById("record-btn");
     const shortcutDisplay = document.getElementById("shortcut-display");
@@ -32,7 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const error = chrome.runtime.lastError;
             if (error) {
                 if (!isRecording) {
-                    setStatus(`설정을 불러오지 못했습니다: ${error.message}`);
+                    setStatus(t("설정을 불러오지 못했습니다") + ": " + error.message);
                 }
                 return;
             }
@@ -62,7 +63,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const error = chrome.runtime.lastError;
             if (error) {
                 applyEnabled(previous);
-                setStatus(`설정을 저장하지 못했습니다: ${error.message}`);
+                setStatus(t("설정을 저장하지 못했습니다") + ": " + error.message);
             }
         });
     });
@@ -80,10 +81,10 @@ document.addEventListener("DOMContentLoaded", () => {
         clearTimeout(stopRecordingTimer);
         isRecording = true;
         recordButton.className = "btn-primary icon-button icon-cancel";
-        recordButton.title = recordButton.ariaLabel = "\uB2E8\uCD95\uD0A4 \uBCC0\uACBD \uCDE8\uC18C";
+        recordButton.title = recordButton.ariaLabel = t("단축키 변경 취소");
         shortcutDisplay.classList.add("recording");
-        currentShortcutText.textContent = "키를 누르세요...";
-        setStatus("원하는 단축키 조합을 누르세요 (예: Ctrl + Shift + L)");
+        currentShortcutText.textContent = t("키를 누르세요...");
+        setStatus(t("원하는 단축키 조합을 누르세요 (예: Ctrl + Shift + L)"));
         window.addEventListener("keydown", handleKeyDown);
     }
 
@@ -92,12 +93,20 @@ document.addEventListener("DOMContentLoaded", () => {
         stopRecordingTimer = undefined;
         isRecording = false;
         recordButton.className = "btn-primary icon-button icon-edit";
-        recordButton.title = recordButton.ariaLabel = "\uB2E8\uCD95\uD0A4 \uBCC0\uACBD";
+        recordButton.title = recordButton.ariaLabel = t("단축키 변경");
         shortcutDisplay.classList.remove("recording");
         loadSavedShortcut();
         setStatus("");
         window.removeEventListener("keydown", handleKeyDown);
     }
+
+    const settingsDialog = document.getElementById("settings-dialog");
+    settingsDialog?.addEventListener("close", () => { if (isRecording) stopRecording(); });
+    globalThis.MH?.subscribe(() => {
+        if (isRecording) stopRecording();
+        recordButton.title = recordButton.ariaLabel = t("\uB2E8\uCD95\uD0A4 \uBCC0\uACBD");
+        setStatus("");
+    });
 
     function getKeyLabel(code) {
         if (code.startsWith("Key")) {
@@ -120,7 +129,7 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
         if (!(event.ctrlKey || event.altKey || event.metaKey) || !event.code) {
-            setStatus("Ctrl, Alt 또는 Meta와 다른 키를 함께 눌러 주세요.");
+            setStatus(t("Ctrl, Alt 또는 Meta와 다른 키를 함께 눌러 주세요."));
             return;
         }
         const parts = [];
@@ -148,7 +157,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const error = chrome.runtime.lastError;
             if (error) {
                 if (isRecording) {
-                    setStatus(`단축키를 저장하지 못했습니다: ${error.message}`);
+                    setStatus(t("단축키를 저장하지 못했습니다") + ": " + error.message);
                 }
                 return;
             }
