@@ -37,6 +37,9 @@
 | --- | --- |
 | [유저 가이드](docs/user-guide.md) | 설치, 복사, 단축키 설정, 히스토리 관리, 문제 해결 |
 | [개발자 가이드](docs/developer-guide.md) | 개발 환경, 구조, 메시지, 저장 데이터, 테스트, 빌드와 배포 |
+| [개발 히스토리](docs/development-history.md) | 버전별 변경점, 마스터 안정 버전 선언 및 상세 릴리스 내역 |
+| [1차 안정 버전 기준판 (v2.2.1)](docs/master-baseline-v2.2.1.md) | v2.2.1 기준 소스, 고정 배포물 해시(SHA-256) 및 개선 사항 |
+| [스토어 리소스 가이드](store-assets/README.md) | Chrome 웹 스토어 및 웨일 스토어용 에셋 규격 및 관리 구조 |
 
 ## 개발 시작
 

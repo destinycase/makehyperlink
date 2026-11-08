@@ -1,6 +1,6 @@
 # 개발자 가이드
 
-[README로 돌아가기](../README.md) · [유저 가이드](user-guide.md)
+[README로 돌아가기](../README.md) · [유저 가이드](user-guide.md) · [개발 히스토리](development-history.md) · [1차 기준판(v2.2.1)](master-baseline-v2.2.1.md)
 
 현재 코드와 배포 버전 **2.2.1** (안정 버전)을 기준으로 설명합니다.
 
