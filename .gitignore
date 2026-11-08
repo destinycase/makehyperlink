@@ -19,8 +19,14 @@ npm-debug.log*
 .gemini/
 .env
 
-#release
+# release
 release/
 
 # Local store promotional assets
-/store-assets/
+Asset/store_assets/
+store-assets/
+
+# AI agent local guidelines & scratch
+AGENTS.md
+scratch/
+docs_dev/
