@@ -47,8 +47,9 @@ jobs:
           files: release/makehyperlink-${{ github.ref_name }}.zip
           name: Release ${{ github.ref_name }}
           body: |
-            MakeHyperlink v2.1.5
+            MakeHyperlink v2.2.1 (Stable)
 
+            - Support Whale Store compatibility by standardizing forward slashes in release packages.
             - Add a settings dialog next to Help.
             - Choose English (default) or Korean; persist the selected language locally.
             - Localize panel controls, help, settings and context menus.
